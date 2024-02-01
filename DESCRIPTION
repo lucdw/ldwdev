@@ -1,0 +1,14 @@
+Package: ldwdev
+Type: Package
+Title: Utilities for development R package
+Version: 0.1.1
+Author: Luc De Wilde
+Maintainer: Luc De Wilde <Luc.DeWilde@uGent.be>
+Description: This package contains utilities to help me
+    for working on lavaan code.
+License: GPL-2
+Encoding: UTF-8
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+RoxygenNote: 7.3.1
