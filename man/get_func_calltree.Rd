@@ -7,7 +7,7 @@
 get_func_calltree(map, func)
 }
 \arguments{
-\item{map}{a character item naming the R map of the package}
+\item{map}{a character item naming the directory or R-directory of the package}
 
 \item{func}{name(s) of the function for which a calltree is demanded}
 }
@@ -18,6 +18,11 @@ recursive list of functions with called functions, when the called function also
 }
 \description{
 This function makes creates a call tree for a function in the r files of a package.
+}
+\details{
+The function determines the functions in the package by looking at the top-level
+assignments in the R files. Only LEFT_ASSIGN \code{'<-'} symbols are looked at. Function calls
+via \code{do.call} or function definitions via \code{setMethod} are ignored!
 }
 \examples{
 \dontrun{

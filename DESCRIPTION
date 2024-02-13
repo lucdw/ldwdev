@@ -1,7 +1,7 @@
 Package: ldwdev
 Type: Package
 Title: Utilities for development R package
-Version: 0.1.0
+Version: 0.1.1
 Author: Luc De Wilde
 Maintainer: Luc De Wilde <Luc.DeWilde@uGent.be>
 Description: This package contains utilities to help me

@@ -1,3 +1,4 @@
+#' @importFrom utils browseURL
 #' @importFrom utils getParseData
 get_parsed <- function(filename) {
   stopifnot(is.character(filename), length(filename) == 1)
@@ -7,6 +8,7 @@ get_parsed <- function(filename) {
   if (inherits(temp, "try-error")) {
     stop("file ", filename, " cannot be parsed")
   }
+  attr(temp, "basename") <- basename(filename)
   return(invisible(temp))
 }
 get_toplevel_assigns <- function(parseddata, parentid = 0L) {
@@ -16,7 +18,11 @@ get_toplevel_assigns <- function(parseddata, parentid = 0L) {
     id <- exprs[i]
     rij <- which(parseddata$id == id)
     tmp <- switch(parseddata$token[rij],
-     SYMBOL = paste0("SYMBOL:", parseddata$text[rij]),
+     SYMBOL = paste("SYMBOL",
+                    parseddata$text[rij],
+                    parseddata$line1[rij],
+                    parseddata$col1[rij],
+                    sep = ";"),
      LEFT_ASSIGN = "LEFT_ASSIGN",
      FUNCTION = paste("FUNCTION",
                       parseddata$line1[parseddata$id == parseddata$parent[rij]],
@@ -38,27 +44,39 @@ get_toplevel <- function(parseddata) {
   functies <- list()
   synoniemen <- list()
   for (i in asg) {
-    if (grepl("^SYMBOL:", tla[i - 1L])) {
-      smb <- sub("^SYMBOL:", "", tla[i - 1L])
-      if (grepl("^SYMBOL:", tla[i + 1])) {
-        synoniemen[[smb]] <- sub("^SYMBOL:", "", tla[i + 1L])
+    if (grepl("^SYMBOL;", tla[i - 1L])) {
+      smb <- sub("^SYMBOL;", "", tla[i - 1L])
+      smbname <- sub(";.*$", "", smb)
+      smbloc <- as.integer(strsplit(sub("^.*?;", "", smb), ";", fixed = TRUE)[[1L]])
+      if (grepl("^SYMBOL;", tla[i + 1])) {
+        smbR <- sub("^SYMBOL;", "", tla[i + 1L])
+        smbnameR <- sub(";.*$", "", smbR)
+        smblocR <- as.integer(strsplit(sub("^.*?;", "", smbR), ";", fixed = TRUE)[[1L]])
+        synoniemen[[smbname]] <- list(name = smbnameR, def1 = smbloc, def2 = smblocR,
+                                      src = attr(parseddata, "basename"))
       } else if (grepl("^FUNCTION;", tla[i + 1])) {
-        functies[[smb]] <- as.integer(
-          strsplit(sub("^FUNCTION;", "", tla[i + 1L]), ";", fixed = TRUE)[[1L]])
+        funcloc <- as.integer(strsplit(sub("^FUNCTION;", "", tla[i + 1L]), ";", fixed = TRUE)[[1L]])
+        functies[[smbname]] <- list(def1 = smbloc, def2 = funcloc,
+                                src = attr(parseddata, "basename"))
       }
     }
   }
   # correction for 'a <-> b' and 'b <-> c' => 'a <-> c' and 'b <-> c'
-  assocs <- names(synoniemen) %in% unlist(synoniemen, recursive =  FALSE, use.names = FALSE)
-  while (any(assocs)) {
-    asso <- names(synoniemen)[assocs]
-    for (j in asso) synoniemen[[j]] <- synoniemen[[synoniemen[[j]]]]
+  linkse <- names(synoniemen)
+  rechtse <- sapply(synoniemen, \(x) x$name)
+  ab_index <- which(rechtse %in% linkse)
+  while (length(ab_index) >  0L) {
+    nr1 <- ab_index[1]
     # opgelet: als a <-> b én b <-> a (is waarschijnlijk fout, maar ontloop toch loop indien voorkomt)
-    removesyns <- names(synoniemen) == unlist(synoniemen, recursive =  FALSE, use.names = FALSE)
-    synoniemen <- synoniemen[!removesyns]
-    assocs <- names(synoniemen) %in% unlist(synoniemen, recursive =  FALSE, use.names = FALSE)
+    if (linkse[nr1] == rechtse[nr1]) {
+      synoniemen <- synoniemen[-nr1]
+    } else {
+      synoniemen[[nr1]] <- synoniemen[[rechtse[[nr1]]]]
+    }
+    linkse <- names(synoniemen)
+    rechtse <- sapply(synoniemen, \(x) x$name)
+    ab_index <- which(rechtse %in% linkse)
   }
-  #
   list(functies = functies, synoniemen = synoniemen)
 }
 get_function_calls <- function(parseddata, range) {
