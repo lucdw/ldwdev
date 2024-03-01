@@ -167,7 +167,7 @@ print.calltree <- summary.calltree <- function(x, ...) {
 #'
 #' @examples
 #' \dontrun{
-#'  temp <- calltree_html("R", "c:\temp\wwwcalltree")
+#'  temp <- calltree_html("R", "c:/temp/wwwcalltree")
 #' }
 #'
 #' @author Luc De Wilde
@@ -312,12 +312,17 @@ cat("<!DOCTYPE html>
       <body>
       <h1>All functions in ",
     map,
-    ".</h1>\n<table>\n<tr><th>Name</th><th># calls</th><th># called by</th><th>Synonym</th></tr>\n")
+    ".</h1>\n<table>\n<tr><th>Name</th><th># calls</th><th># called by</th>",
+    "<th>synonym of</th><th>defined in</th><th>at line</th></tr>\n")
 for (i in seq_along(alles)) {
   cat("<tr><td><a href=\"", htmlnamen[[alles[i]]], ".html\", target=\"_blank\">",
       alles[i], "</a></td><td>", length(listcalls[[alles[i]]]), "</td><td>",
       length(xref[[alles[i]]]), "</td><td>", sep = "")
-  if (any(alles[i] == synoniemnamen)) cat(synoniemen[[alles[i]]]$name)
+  if (any(alles[i] == synoniemnamen)) {
+    cat(synoniemen[[alles[i]]]$name, "</td><td>", synoniemen[[alles[i]]]$src, "</td><td>", synoniemen[[alles[i]]]$def1[1])
+  } else {
+    cat("</td><td>", functies[[alles[i]]]$src, "</td><td>", functies[[alles[i]]]$def1[1])
+  }
   cat("</td></tr>\n")
 }
 cat("</table></body>\n</html>\n")

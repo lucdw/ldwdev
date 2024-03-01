@@ -21,7 +21,7 @@ via \code{do.call} or function definitions via \code{setMethod} are ignored!
 }
 \examples{
 \dontrun{
- temp <- calltree_html("R", "c:\temp\wwwcalltree")
+ temp <- calltree_html("R", "c:/temp/wwwcalltree")
 }
 
 }
