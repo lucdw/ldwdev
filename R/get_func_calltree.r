@@ -35,8 +35,8 @@ get_call_info <- function(map) {
       for (calledone in funccall) {
         xref[[calledone]] <- c(xref[[calledone]], f)
         if (any(calledone == synoniemnamen)) { # add also to synoniem function xref
-          calledone <- synoniemen[[calledone]]$name
-          xref[[calledone]] <- c(xref[[calledone]], f)
+          calledfunc <- synoniemen[[calledone]]$name
+          xref[[calledfunc]] <- c(xref[[calledfunc]], paste0(f, "|", calledone))
         }
       }
     }
@@ -81,7 +81,6 @@ get_func_calltree <- function(map, func) {
   functies <- tmp$functies
   synoniemen <- tmp$synoniemen
   listcalls <- tmp$calls
-  xref <- tmp$xrefs
   calltree <- function(fname, parents) {
     fname2 <- fname
     if (any(fname == names(synoniemen))) fname2 <- synoniemen[[f]]$name
@@ -236,7 +235,14 @@ functies[[f]]$src,
     } else {
       for (j in seq_along(xref[[f]])) {
         caller <- xref[[f]][j]
-        cat("<a href=\"", htmlnamen[[caller]], ".html\">", caller, "</a><br />\n", sep = "")
+        callers <- strsplit(caller, "|", fixed = TRUE)[[1]]
+        if (length(callers) == 2L) {
+          cat("<a href=\"", htmlnamen[[callers[1]]], ".html\">", callers[1], "</a> via ",
+              "<a href=\"", htmlnamen[[callers[2]]], ".html\">", callers[2], "</a><br />\n",
+              sep = "")
+        } else {
+          cat("<a href=\"", htmlnamen[[caller]], ".html\">", caller, "</a><br />\n", sep = "")
+        }
       }
     }
     cat("</div>
