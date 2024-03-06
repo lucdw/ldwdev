@@ -10,18 +10,13 @@ get_xref(filename)
 \item{filename}{a character item naming the file to search in}
 }
 \value{
-list with, per expression at the highest level (typically the functions defined on the highest level in
+list with, per expression at the highest level
+(typically the functions defined on the highest level in
  a package r-file), a list of object names with their references
 }
 \description{
-This function creates a cross-reference for all identifiers found in an r file, grouped per expression on main level.
-}
-\examples{
-\dontrun{
- temp <- get_xref("R/xxx_lavaan.R")
- mainxref <- as.environment(temp[[1]]) # environment to view all values when View'ed in RStudio
-}
-
+This function creates a cross-reference for all identifiers found
+in an r file, grouped per expression on main level.
 }
 \author{
 Luc De Wilde

@@ -13,27 +13,35 @@ compare_files(
 )
 }
 \arguments{
-\item{infile1}{a connection or a character vector of length 1 with the path to the first file}
+\item{infile1}{a connection or a character vector of length 1
+with the path to the first file}
 
-\item{infile2}{a connection or a character vector of length 1 with the path to the second file}
+\item{infile2}{a connection or a character vector of length 1
+with the path to the second file}
 
-\item{outfile}{a connection or a character vector of length 1 with the path to the output file}
+\item{outfile}{a connection or a character vector of length 1
+with the path to the output file}
 
-\item{remove.lines}{NULL or a character vector with strings identifying lines which should be excluded from comparison}
+\item{remove.lines}{NULL or a character vector with strings
+identifying lines which should be excluded from comparison}
 
-\item{equal.lines}{integer value > 1L, for number of lines to be a match, default is 2L}
+\item{equal.lines}{integer value > 1L, for number of
+lines to be a match, default is 2L}
 }
 \value{
 number of differences found
 }
 \description{
-This function compares two text files and stores the differences in a typical .diff file
+This function compares two text files and stores the differences in a
+typical .diff file.
 }
 \examples{
 filenames <- tempfile(fileext = c(".txt", ".txt"))
 outfil <- file()
-writeLines(c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j"), filenames[1])
-writeLines(c("0", "1", "a", "b", "c", "e", "f", "grrr", "h", "i", "j"), filenames[2])
+writeLines(c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j"),
+            filenames[1])
+writeLines(c("0", "1", "a", "b", "c", "e", "f", "grrr", "h", "i", "j"),
+            filenames[2])
 compare_files(filenames[1], filenames[2], outfil, "rr")
 cat(readLines(outfil), sep="\n")
 

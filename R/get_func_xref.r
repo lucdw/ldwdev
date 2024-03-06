@@ -1,14 +1,18 @@
 #' The get_func_xref function
 #'
-#' This function makes creates a cross-reference for all function.defs found in a group of r files.
+#' This function makes creates a cross-reference for all function.defs found
+#' in a group of r files.
 #'
 #' @param map a character item naming the map to search in
-#' @param recursive a logical indicating if subdirectories should be searched in for r-files (default FALSE)
-#' @param only.cross.file a logical indicating (if TRUE) to select only references in other files than the definition
+#' @param recursive a logical indicating if subdirectories should be searched
+#'  in for r-files (default FALSE)
+#' @param only.cross.file a logical indicating (if TRUE) to select only
+#'  references in other files than the definition
 #'
-#' @return list of function.defs, with in each item a list with functionname, file, line in file
-#'  where the function is defined and a dataframe dfrefs with the places where the function is
-#'  called (file, line, function or empty)
+#' @return list of function.defs, with in each item a list with functionname,
+#'  file, line in file where the function is defined and a dataframe dfrefs
+#'  with the places where the function is called (file, line,
+#'  function or empty)
 #'
 #' @examples
 #' \dontrun{
@@ -19,7 +23,8 @@
 #'   dfrefs <- temp1$dfrefs
 #'   if (nrows(dfrefs)>0) {
 #'     for (fr in seq.int(1, nrow(dfrefs))) {
-#'      cat("     ", dfrefs$refFileName[fr], dfrefs$refLocation[fr], dfrefs$refFunction[fr], "\n")
+#'      cat("     ", dfrefs$refFileName[fr], dfrefs$refLocation[fr],
+#'       dfrefs$refFunction[fr], "\n")
 #'     }
 #'   }
 #'  }
@@ -29,7 +34,9 @@
 #' @name get_func_xref
 #' @rdname get_func_xref
 #' @export
-get_func_xref <- function(map = ".", recursive = FALSE, only.cross.file = FALSE) {
+get_func_xref <- function(map = ".",
+                          recursive = FALSE,
+                          only.cross.file = FALSE) {
   stopifnot(is.character(map), length(map) == 1)
   stopifnot(is.logical(recursive), length(recursive) == 1)
   files <- dir(map, pattern = "\\.[rR]$", recursive = recursive)
@@ -54,26 +61,30 @@ get_func_xref <- function(map = ".", recursive = FALSE, only.cross.file = FALSE)
     if (length(welke) == 0) return(FALSE)
     temp[welke, ]
   })
-  w <- sapply(seq_along(function.defs), function(x) !identical(function.defs[[x]], FALSE))
+  w <- sapply(seq_along(function.defs),
+              function(x) !identical(function.defs[[x]], FALSE))
   if (length(w) == 0) stop("no function definitions found.")
   function.defs <- do.call(rbind, function.defs[w])
   function.defs <- function.defs[order(function.defs$text), ]
   references <- lapply(files, function(filename) {
     filelines <- suppressWarnings(readLines(filename))
-    temp <- try(getParseData(parse(text = gsub("^*\\$", "#", filelines), keep.source = TRUE)), silent = TRUE)
+    temp <- try(getParseData(parse(text = gsub("^*\\$", "#", filelines),
+                                   keep.source = TRUE)), silent = TRUE)
     if (inherits(temp, "try-error")) return(FALSE)
     temp$filename <- filename
     welke <- which(temp$token == "SYMBOL_FUNCTION_CALL")
     if (length(welke) == 0) return(FALSE)
     temp[welke, ]
   })
-  w <- sapply(seq_along(references), function(x) !identical(references[[x]], FALSE))
+  w <- sapply(seq_along(references),
+              function(x) !identical(references[[x]], FALSE))
   references <- do.call(rbind, references[w])
 
   get_function_on_locatie <- function(locatie.file, locatie.lijn) {
     locatie.functies <- function.defs[function.defs$filename == locatie.file, ]
     if (nrow(locatie.functies) == 0) return("")
-    locatie.functies <- locatie.functies[order(locatie.functies$line1, decreasing = TRUE), ]
+    locatie.functies <- locatie.functies[order(locatie.functies$line1,
+                                               decreasing = TRUE), ]
     locatie.j <- which(locatie.functies$line1 <= locatie.lijn)
     if (length(locatie.j) == 0) return("")
     locatie.functies$text[locatie.j[1]]
@@ -87,7 +98,8 @@ get_func_xref <- function(map = ".", recursive = FALSE, only.cross.file = FALSE)
     ffile <- function.defs$filename[i]
     fline <- function.defs$line1[i]
     if (only.cross.file) {
-      ind <- which(references$text == fname & (references$filename != function.defs$filename[i]))
+      ind <- which(references$text == fname &
+                     (references$filename != function.defs$filename[i]))
     } else {
       ind <- which(references$text == fname)
     }

@@ -15,9 +15,11 @@ calltree_html(map, dest)
 This function creates a html website with all R functions of a package
 }
 \details{
-The function determines the functions in the package by looking at the top-level
-assignments in the R files. Only LEFT_ASSIGN \code{'<-'} symbols are looked at. Function calls
-via \code{do.call} or function definitions via \code{setMethod} are ignored!
+The function determines the functions in the package by
+looking at the top-level assignments in the R files. Only
+ LEFT_ASSIGN \code{'<-'} symbols are looked at. Function calls
+via \code{do.call} or function definitions via \code{setMethod}
+are ignored!
 }
 \examples{
 \dontrun{

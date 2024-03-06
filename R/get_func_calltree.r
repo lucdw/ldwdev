@@ -27,16 +27,18 @@ get_call_info <- function(map) {
   listcalls <- list()
   for (i in seq_along(functienamen)) {
     f <- functienamen[i]
-    calls <- get_function_calls(parsedfiles[[functieparsed[f]]], functies[[f]]$def2)
+    calls <- get_function_calls(parsedfiles[[functieparsed[f]]],
+                                functies[[f]]$def2)
     funcind <- calls %in% alles
     if (any(funcind)) {
       funccall <- calls[funcind]
       listcalls[[f]] <- funccall
       for (calledone in funccall) {
         xref[[calledone]] <- c(xref[[calledone]], f)
-        if (any(calledone == synoniemnamen)) { # add also to synoniem function xref
+        if (any(calledone == synoniemnamen)) { # add also to synoniem
           calledfunc <- synoniemen[[calledone]]$name
-          xref[[calledfunc]] <- c(xref[[calledfunc]], paste0(f, "|", calledone))
+          xref[[calledfunc]] <- c(xref[[calledfunc]],
+                                  paste0(f, "|", calledone))
         }
       }
     }
@@ -46,22 +48,30 @@ get_call_info <- function(map) {
     if (is.null(listcalls[[f]])) listcalls[[f]] <- character(0L)
     if (is.null(xref[[f]])) xref[[f]] <- character(0L)
   }
-  return(list(functies = functies, synoniemen = synoniemen, calls = listcalls, xrefs = xref))
+  return(list(functies = functies, synoniemen = synoniemen,
+              calls = listcalls, xrefs = xref))
 }
 #' The get_func_calltree function
 #'
-#' This function makes creates a call tree for a function in the r files of a package.
+#' This function makes creates a call tree for a function
+#' in the r files of a package.
 #'
 #' @details
-#' The function determines the functions in the package by looking at the top-level
-#' assignments in the R files. Only LEFT_ASSIGN \code{'<-'} symbols are looked at. Function calls
-#' via \code{do.call} or function definitions via \code{setMethod} are ignored!
+#' The function determines the functions in the package by
+#' looking at the top-level assignments in the R files. Only
+#' LEFT_ASSIGN \code{'<-'} symbols are looked at. Function calls
+#' via \code{do.call} or function definitions
+#' via \code{setMethod} are ignored!
 #'
-#' @param map a character item naming the directory or R-directory of the package
-#' @param func name(s) of the function for which a calltree is demanded
+#' @param map a character item naming the directory
+#' or R-directory of the package
+#' @param func name(s) of the function for which
+#' a calltree is demanded
 #'
-#' @return recursive list of functions with called functions, when the called function also appears higher in the
-#'  branch followed by ":RECURSIVE" and if the called function has no further (package) functions
+#' @return recursive list of functions with called functions,
+#' when the called function also appears higher in the
+#'  branch followed by ":RECURSIVE" and if the called function
+#'   has no further (package) functions
 #'  called followed by ":TERMINAL"
 #'
 #' @examples
@@ -135,7 +145,7 @@ print.calltree <- summary.calltree <- function(x, ...) {
   if (is.null(ddd$pos)) ddd$pos <- 0L
   namen <- names(x)
   if (inherits(x, "character")) {
-    cat(x, "\n", sep="")
+    cat(x, "\n", sep = "")
     assign("on_new_line", TRUE, envir = ddd$envpc)
     return()
   }
@@ -145,8 +155,9 @@ print.calltree <- summary.calltree <- function(x, ...) {
       cat(strrep(" ", ddd$pos))
       assign("on_new_line", FALSE, envir = ddd$envpc)
     }
-    cat(namen[i],":",sep="")
-    print.calltree(x[[i]], envpc = ddd$envpc, pos = nchar(namen[i]) + 1L + ddd$pos)
+    cat(namen[i], ":", sep = "")
+    print.calltree(x[[i]], envpc = ddd$envpc,
+                   pos = nchar(namen[i]) + 1L + ddd$pos)
     i <- i + 1L
   }
 }
@@ -155,9 +166,11 @@ print.calltree <- summary.calltree <- function(x, ...) {
 #' This function creates a html website with all R functions of a package
 #'
 #' @details
-#' The function determines the functions in the package by looking at the top-level
-#' assignments in the R files. Only LEFT_ASSIGN \code{'<-'} symbols are looked at. Function calls
-#' via \code{do.call} or function definitions via \code{setMethod} are ignored!
+#' The function determines the functions in the package by
+#' looking at the top-level assignments in the R files. Only
+#'  LEFT_ASSIGN \code{'<-'} symbols are looked at. Function calls
+#' via \code{do.call} or function definitions via \code{setMethod}
+#' are ignored!
 #'
 #' @param map the directory or R-directory of the package
 #' @param dest the directory where the html files should be written
@@ -184,8 +197,10 @@ calltree_html <- function(map, dest) {
   functienamen <- names(functies)
   synoniemnamen <- names(synoniemen)
   htmlnamen <- list()
-  for (i in seq_along(functienamen)) htmlnamen[[functienamen[i]]] <- paste0("f", i)
-  for (i in seq_along(synoniemnamen)) htmlnamen[[synoniemnamen[i]]] <- paste0("s", i)
+  for (i in seq_along(functienamen))
+    htmlnamen[[functienamen[i]]] <- paste0("f", i)
+  for (i in seq_along(synoniemnamen))
+    htmlnamen[[synoniemnamen[i]]] <- paste0("s", i)
   alles <- sort(c(functienamen, synoniemnamen))
   for (i in seq_along(functienamen)) {
     f <- functienamen[i]
@@ -221,7 +236,8 @@ functies[[f]]$src,
   ")
     if (length(funccall) > 0L) {
       for (j in seq_along(funccall)) {
-        cat("<a href=\"", htmlnamen[[funccall[j]]], ".html\">", funccall[j], "</a><br />\n", sep = "")
+        cat("<a href=\"", htmlnamen[[funccall[j]]], ".html\">",
+            funccall[j], "</a><br />\n", sep = "")
       }
     } else {
       cat("none")
@@ -237,11 +253,14 @@ functies[[f]]$src,
         caller <- xref[[f]][j]
         callers <- strsplit(caller, "|", fixed = TRUE)[[1]]
         if (length(callers) == 2L) {
-          cat("<a href=\"", htmlnamen[[callers[1]]], ".html\">", callers[1], "</a> via ",
-              "<a href=\"", htmlnamen[[callers[2]]], ".html\">", callers[2], "</a><br />\n",
+          cat("<a href=\"", htmlnamen[[callers[1]]], ".html\">",
+              callers[1], "</a> via ",
+              "<a href=\"", htmlnamen[[callers[2]]], ".html\">",
+              callers[2], "</a><br />\n",
               sep = "")
         } else {
-          cat("<a href=\"", htmlnamen[[caller]], ".html\">", caller, "</a><br />\n", sep = "")
+          cat("<a href=\"", htmlnamen[[caller]], ".html\">",
+              caller, "</a><br />\n", sep = "")
         }
       }
     }
@@ -280,14 +299,16 @@ div.mycontainer div {
       synoniemen[[f]]$src,
       "</p>\n")
   cat("<p>This function is the same as <a href=\"",
-      htmlnamen[[synoniemen[[f]]$name]], ".html\">", synoniemen[[f]]$name, "</a></p>\n", sep = "")
+      htmlnamen[[synoniemen[[f]]$name]], ".html\">",
+      synoniemen[[f]]$name, "</a></p>\n", sep = "")
   cat("</p><div class=\"mycontainer\">
   <div style=\"background-color:#FFF4A3;\">
-  <h2>Functions called (copied from ", synoniemen[[f]]$name,")</h2>
+  <h2>Functions called (copied from ", synoniemen[[f]]$name, ")</h2>
   ")
   if (length(funccall) > 0L) {
     for (j in seq_along(funccall)) {
-      cat("<a href=\"", htmlnamen[[funccall[j]]], ".html\">", funccall[j], "</a><br />\n", sep = "")
+      cat("<a href=\"", htmlnamen[[funccall[j]]], ".html\">",
+          funccall[j], "</a><br />\n", sep = "")
     }
   } else {
     cat("none")
@@ -301,7 +322,8 @@ div.mycontainer div {
   } else {
     for (j in seq_along(xref[[f]])) {
       caller <- xref[[f]][j]
-      cat("<a href=\"", htmlnamen[[caller]], ".html\">", caller, "</a><br />\n", sep = "")
+      cat("<a href=\"", htmlnamen[[caller]], ".html\">", caller,
+          "</a><br />\n", sep = "")
     }
   }
   cat("</div>
@@ -321,13 +343,18 @@ cat("<!DOCTYPE html>
     ".</h1>\n<table>\n<tr><th>Name</th><th># calls</th><th># called by</th>",
     "<th>synonym of</th><th>defined in</th><th>at line</th></tr>\n")
 for (i in seq_along(alles)) {
-  cat("<tr><td><a href=\"", htmlnamen[[alles[i]]], ".html\", target=\"_blank\">",
-      alles[i], "</a></td><td>", length(listcalls[[alles[i]]]), "</td><td>",
+  cat("<tr><td><a href=\"", htmlnamen[[alles[i]]],
+      ".html\", target=\"_blank\">",
+      alles[i], "</a></td><td>", length(listcalls[[alles[i]]]),
+      "</td><td>",
       length(xref[[alles[i]]]), "</td><td>", sep = "")
   if (any(alles[i] == synoniemnamen)) {
-    cat(synoniemen[[alles[i]]]$name, "</td><td>", synoniemen[[alles[i]]]$src, "</td><td>", synoniemen[[alles[i]]]$def1[1])
+    cat(synoniemen[[alles[i]]]$name, "</td><td>",
+        synoniemen[[alles[i]]]$src, "</td><td>",
+        synoniemen[[alles[i]]]$def1[1])
   } else {
-    cat("</td><td>", functies[[alles[i]]]$src, "</td><td>", functies[[alles[i]]]$def1[1])
+    cat("</td><td>", functies[[alles[i]]]$src, "</td><td>",
+        functies[[alles[i]]]$def1[1])
   }
   cat("</td></tr>\n")
 }

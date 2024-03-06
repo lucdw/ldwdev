@@ -29,7 +29,7 @@ get_toplevel_assigns <- function(parseddata, parentid = 0L) {
                       parseddata$col1[parseddata$id == parseddata$parent[rij]],
                       parseddata$line2[parseddata$id == parseddata$parent[rij]],
                       parseddata$col2[parseddata$id == parseddata$parent[rij]],
-                      sep=";"),
+                      sep = ";"),
      expr = get_toplevel_assigns(parseddata, id),
      paste0("U:", parseddata$token[rij])
     )
@@ -47,15 +47,19 @@ get_toplevel <- function(parseddata) {
     if (grepl("^SYMBOL;", tla[i - 1L])) {
       smb <- sub("^SYMBOL;", "", tla[i - 1L])
       smbname <- sub(";.*$", "", smb)
-      smbloc <- as.integer(strsplit(sub("^.*?;", "", smb), ";", fixed = TRUE)[[1L]])
+      smbloc <- as.integer(strsplit(sub("^.*?;", "", smb), ";",
+                                    fixed = TRUE)[[1L]])
       if (grepl("^SYMBOL;", tla[i + 1])) {
-        smbR <- sub("^SYMBOL;", "", tla[i + 1L])
-        smbnameR <- sub(";.*$", "", smbR)
-        smblocR <- as.integer(strsplit(sub("^.*?;", "", smbR), ";", fixed = TRUE)[[1L]])
-        synoniemen[[smbname]] <- list(name = smbnameR, def1 = smbloc, def2 = smblocR,
+        smb_r <- sub("^SYMBOL;", "", tla[i + 1L])
+        smbname_r <- sub(";.*$", "", smb_r)
+        smbloc_r <- as.integer(strsplit(sub("^.*?;", "", smb_r), ";",
+                                        fixed = TRUE)[[1L]])
+        synoniemen[[smbname]] <- list(name = smbname_r,
+                                      def1 = smbloc, def2 = smbloc_r,
                                       src = attr(parseddata, "basename"))
       } else if (grepl("^FUNCTION;", tla[i + 1])) {
-        funcloc <- as.integer(strsplit(sub("^FUNCTION;", "", tla[i + 1L]), ";", fixed = TRUE)[[1L]])
+        funcloc <- as.integer(strsplit(sub("^FUNCTION;", "", tla[i + 1L]),
+                                       ";", fixed = TRUE)[[1L]])
         functies[[smbname]] <- list(def1 = smbloc, def2 = funcloc,
                                 src = attr(parseddata, "basename"))
       }
@@ -67,7 +71,8 @@ get_toplevel <- function(parseddata) {
   ab_index <- which(rechtse %in% linkse)
   while (length(ab_index) >  0L) {
     nr1 <- ab_index[1]
-    # opgelet: als a <-> b én b <-> a (is waarschijnlijk fout, maar ontloop toch loop indien voorkomt)
+    # opgelet: als a <-> b én b <-> a (is waarschijnlijk fout, maar ontloop
+    # toch loop indien voorkomt)
     if (linkse[nr1] == rechtse[nr1]) {
       synoniemen <- synoniemen[-nr1]
     } else {

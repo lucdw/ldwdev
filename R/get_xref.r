@@ -1,16 +1,19 @@
 #' The get_xref function
 #'
-#' This function creates a cross-reference for all identifiers found in an r file, grouped per expression on main level.
+#' This function creates a cross-reference for all identifiers found
+#' in an r file, grouped per expression on main level.
 #'
 #' @param filename a character item naming the file to search in
 #'
-#' @return list with, per expression at the highest level (typically the functions defined on the highest level in
+#' @return list with, per expression at the highest level
+#' (typically the functions defined on the highest level in
 #'  a package r-file), a list of object names with their references
 #'
 #' @examples
 #' \dontrun{
 #'  temp <- get_xref("R/xxx_lavaan.R")
-#'  mainxref <- as.environment(temp[[1]]) # environment to view all values when View'ed in RStudio
+#'  mainxref <- as.environment(temp[[1]]) # environment to view all
+#'  values when Viewed in RStudio
 #' }
 #'
 #' @author Luc De Wilde
@@ -64,7 +67,8 @@ get_xref <- function(filename) {
     symbollines
   })
   names(retval) <- sapply(seq.int(nrow(highest.level.expr)), function(i.expr) {
-    paste("from", highest.level.expr$line1[i.expr], "to", highest.level.expr$line2[i.expr])
+    paste("from", highest.level.expr$line1[i.expr], "to",
+          highest.level.expr$line2[i.expr])
   })
   return(retval)
 }

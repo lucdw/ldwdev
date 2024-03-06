@@ -9,17 +9,21 @@ get_func_xref(map = ".", recursive = FALSE, only.cross.file = FALSE)
 \arguments{
 \item{map}{a character item naming the map to search in}
 
-\item{recursive}{a logical indicating if subdirectories should be searched in for r-files (default FALSE)}
+\item{recursive}{a logical indicating if subdirectories should be searched
+in for r-files (default FALSE)}
 
-\item{only.cross.file}{a logical indicating (if TRUE) to select only references in other files than the definition}
+\item{only.cross.file}{a logical indicating (if TRUE) to select only
+references in other files than the definition}
 }
 \value{
-list of function.defs, with in each item a list with functionname, file, line in file
- where the function is defined and a dataframe dfrefs with the places where the function is
- called (file, line, function or empty)
+list of function.defs, with in each item a list with functionname,
+ file, line in file where the function is defined and a dataframe dfrefs
+ with the places where the function is called (file, line,
+ function or empty)
 }
 \description{
-This function makes creates a cross-reference for all function.defs found in a group of r files.
+This function makes creates a cross-reference for all function.defs found
+in a group of r files.
 }
 \examples{
 \dontrun{
@@ -30,7 +34,8 @@ This function makes creates a cross-reference for all function.defs found in a g
   dfrefs <- temp1$dfrefs
   if (nrows(dfrefs)>0) {
     for (fr in seq.int(1, nrow(dfrefs))) {
-     cat("     ", dfrefs$refFileName[fr], dfrefs$refLocation[fr], dfrefs$refFunction[fr], "\n")
+     cat("     ", dfrefs$refFileName[fr], dfrefs$refLocation[fr],
+      dfrefs$refFunction[fr], "\n")
     }
   }
  }
