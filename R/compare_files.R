@@ -1,4 +1,4 @@
-.ldw_lines_to_text <- function(welke) {
+ldw_lines_to_text <- function(welke) {
   if (welke[1] < welke[2]) {
     welke12 <- paste0(welke[1], ",", welke[2])
   } else {
@@ -120,7 +120,7 @@ compare_files <- function(infile1, infile2,                       # nolint
           if (j > 1L || m[j] > 1L) {
             welke[2L] <- i1 + j - 2L
             welke[4L] <- i2 + m[j] - 2L
-            txtje <- .ldw_lines_to_text(welke)
+            txtje <- ldw_lines_to_text(welke)
             cat(paste(txtje, collapse = ""), "\n", sep = "", file = oc)
             if (j > 1L)
               cat(paste0("< ", lines1[seq.int(i1, i1 + j - 2L)], "\n"),
@@ -146,7 +146,7 @@ compare_files <- function(infile1, infile2,                       # nolint
       }
       if (!found) {
         if (i1 + window >= length(lines1) && i2 + window >= length(lines2)) {
-          txtje <- .ldw_lines_to_text(welke)
+          txtje <- ldw_lines_to_text(welke)
           cat(paste(txtje, collapse = ""), "\n", sep = "", file = oc)
           if (length(welke1) > 0L) cat(paste0("< ", lines1[welke1], "\n"),
                                        sep = "", file = oc)
