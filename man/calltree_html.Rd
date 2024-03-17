@@ -7,7 +7,7 @@
 calltree_html(map, dest)
 }
 \arguments{
-\item{map}{the directory or R-directory of the package}
+\item{map}{the directory of the package}
 
 \item{dest}{the directory where the html files should be written}
 }

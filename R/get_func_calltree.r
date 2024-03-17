@@ -1,3 +1,4 @@
+#' @importFrom cyclocomp cyclocomp_package_dir
 get_call_info <- function(map) {
   stopifnot(is.character(map), length(map) == 1L)
   files <- dir(map, pattern = "\\.[rR]$")
@@ -63,8 +64,7 @@ get_call_info <- function(map) {
 #' via \code{do.call} or function definitions
 #' via \code{setMethod} are ignored!
 #'
-#' @param map a character item naming the directory
-#' or R-directory of the package
+#' @param map a character item naming the directory of the package
 #' @param func name(s) of the function for which
 #' a calltree is demanded
 #'
@@ -172,7 +172,7 @@ print.calltree <- summary.calltree <- function(x, ...) {
 #' via \code{do.call} or function definitions via \code{setMethod}
 #' are ignored!
 #'
-#' @param map the directory or R-directory of the package
+#' @param map the directory of the package
 #' @param dest the directory where the html files should be written
 #'
 #' @return NULL
@@ -188,6 +188,7 @@ print.calltree <- summary.calltree <- function(x, ...) {
 #' @export
 calltree_html <- function(map, dest) {
   stopifnot(is.character(dest), length(dest) == 1L)
+  cyclo <- cyclocomp_package_dir(map)
   tmp <- get_call_info(map)
   functies <- tmp$functies
   synoniemen <- tmp$synoniemen
@@ -230,7 +231,8 @@ f,
 functies[[f]]$def1[1],
 " of ",
 functies[[f]]$src,
-"</p><div class=\"mycontainer\">
+", ", functies[[f]]$def2[3] + 1 - functies[[f]]$def2[1], " lines",
+"</p\n><div class=\"mycontainer\">
   <div style=\"background-color:#FFF4A3;\">
   <h2>Functions called</h2>
   ")
@@ -333,15 +335,33 @@ div.mycontainer div {
 }
 sink(paste0(dest, "/index.html"))
 cat("<!DOCTYPE html>
-      <html>
-      <head>
-      <title>all functions</title>
+<html>
+<head>
+<title>all functions</title>
+<style>
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+</style>
       </head>
       <body>
       <h1>All functions in ",
     map,
     ".</h1>\n<table>\n<tr><th>Name</th><th># calls</th><th># called by</th>",
-    "<th>synonym of</th><th>defined in</th><th>at line</th></tr>\n")
+    "<th>synonym of</th><th>defined in</th><th>at line</th>",
+    "<th># lines</th><th>complexity</th></tr>\n")
 for (i in seq_along(alles)) {
   cat("<tr><td><a href=\"", htmlnamen[[alles[i]]],
       ".html\", target=\"_blank\">",
@@ -351,10 +371,14 @@ for (i in seq_along(alles)) {
   if (any(alles[i] == synoniemnamen)) {
     cat(synoniemen[[alles[i]]]$name, "</td><td>",
         synoniemen[[alles[i]]]$src, "</td><td>",
-        synoniemen[[alles[i]]]$def1[1])
+        synoniemen[[alles[i]]]$def1[1], "</td><td></td><td>")
   } else {
     cat("</td><td>", functies[[alles[i]]]$src, "</td><td>",
-        functies[[alles[i]]]$def1[1])
+        functies[[alles[i]]]$def1[1], "</td><td>",
+        functies[[alles[i]]]$def2[3] + 1 - functies[[alles[i]]]$def2[1],
+        "</td><td>")
+    icyc <- which(cyclo$name == alles[i])
+    if (length(icyc) == 1L) cat(cyclo$cyclocomp[icyc])
   }
   cat("</td></tr>\n")
 }

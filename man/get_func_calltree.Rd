@@ -7,8 +7,7 @@
 get_func_calltree(map, func)
 }
 \arguments{
-\item{map}{a character item naming the directory
-or R-directory of the package}
+\item{map}{a character item naming the directory of the package}
 
 \item{func}{name(s) of the function for which
 a calltree is demanded}

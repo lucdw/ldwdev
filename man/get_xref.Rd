@@ -18,6 +18,14 @@ list with, per expression at the highest level
 This function creates a cross-reference for all identifiers found
 in an r file, grouped per expression on main level.
 }
+\examples{
+\dontrun{
+ temp <- get_xref("R/xxx_lavaan.R")
+ mainxref <- as.environment(temp[[1]]) # environment to view all
+ values when Viewed in RStudio
+}
+
+}
 \author{
 Luc De Wilde
 }
