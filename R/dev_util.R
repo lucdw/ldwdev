@@ -6,7 +6,7 @@ get_parsed <- function(filename) {
   filelines <- suppressWarnings(readLines(filename))
   temp <- try(getParseData(parse(text = filelines, keep.source = TRUE)))
   if (inherits(temp, "try-error")) {
-    stop("file ", filename, " cannot be parsed")
+    dev_stop(gettextf("file %s cannot be parsed", filename), 3L)
   }
   attr(temp, "basename") <- basename(filename)
   return(invisible(temp))

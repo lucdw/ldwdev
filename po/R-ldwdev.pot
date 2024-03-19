@@ -1,0 +1,44 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: ldwdev 0.1.2\n"
+"POT-Creation-Date: 2024-03-19 09:14\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "infile1 empty"
+msgstr ""
+
+msgid "infile2 empty"
+msgstr ""
+
+msgid "No R files found!"
+msgstr ""
+
+msgid "function %s not found in R files!"
+msgstr ""
+
+msgid "NOTE"
+msgstr ""
+
+msgid "WARNING"
+msgstr ""
+
+msgid "ERROR"
+msgstr ""
+
+msgid "file %s cannot be parsed"
+msgstr ""
+
+msgid "no function definitions found."
+msgstr ""
+
+msgid "This is"
+msgstr ""
+
+msgid "is a package with simple tools for package development."
+msgstr ""

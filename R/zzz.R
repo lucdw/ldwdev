@@ -4,7 +4,7 @@
         fields = "Version"
     )
     packageStartupMessage(
-        "Dit is ", paste(pkgname, version), "\n",
-        pkgname, " is een ontwikkelingshulpmiddelen pakket."
+        "This is ", paste(pkgname, version), "\n",
+        pkgname, " is a package with simple tools for package development."
     )
 }
