@@ -70,7 +70,7 @@ compare_files <- function(infile1, infile2,                       # nolint
   equal.lines <- as.integer(equal.lines)
   stopifnot(equal.lines > 1L)
   suppressWarnings(lines1 <- readLines(infile1))
-  if (length(lines1) == 0L) stop("infile1 empty")
+  if (length(lines1) == 0L) dev_stop(gettext("infile1 empty"))
   if (!is.character(infile1) && isOpen(infile1, "r")) close(infile1)
   if (!is.null(remove.lines)) {
     for (rml in remove.lines) {
@@ -79,7 +79,7 @@ compare_files <- function(infile1, infile2,                       # nolint
     }
   }
   suppressWarnings(lines2 <- readLines(infile2))
-  if (length(lines2) == 0L) stop("infile2 empty")
+  if (length(lines2) == 0L) dev_stop(gettext("infile2 empty"))
   if (!is.character(infile2) && isOpen(infile2, "r")) close(infile2)
   if (!is.null(remove.lines)) {
     for (rml in remove.lines) {
