@@ -1,26 +1,40 @@
+# Displays a message (... concatenated with spaces in between) without header
+# and formatted to have a maximum line length of 'txt.width'
+# while all but the first line start with 'indent' spaces
 dev_cat <- function(..., txt.width = 80L, indent = 4L) {
-  wat <- unlist(list(...))
+  wat <- unlist(list(...), use.names = FALSE)
   dev__msg(wat, 0L, txt.width, indent)
 }
+
+# Displays a message with header 'ldwdev NOTE :' and formatted as
+# above via R function 'message'
 dev_note <- function(..., txt.width = 80L, indent = 4L) {
-  wat <- unlist(list(...))
+  wat <- unlist(list(...), use.names = FALSE)
   dev__msg(wat, 1L, txt.width, indent)
 }
+
+# Displays a message with header 'ldwdev WARNING :' and formatted as
+# above via R function 'warning'
 dev_warn <- function(..., txt.width = 80L, indent = 4L) {
-  wat <- unlist(list(...))
+  wat <- unlist(list(...), use.names = FALSE)
   dev__msg(wat, 2L, txt.width, indent)
 }
+
+# Displays a message with header 'ldwdev ERROR :' and formatted as
+# above via R function 'stop'
 dev_stop <- function(..., txt.width = 80L, indent = 4L) {
-  wat <- unlist(list(...))
+  wat <- unlist(list(...), use.names = FALSE)
   dev__msg(wat, 3L, txt.width, indent)
 }
+
+# subroutine for above functions
 dev__msg <- function(txt,
                      severity = 2L,
                      txt.width = 80L,
                      indent = 2L) {
   stopifnot(any(severity == 0:3))
   if (severity == 0L) {
-    header = ""
+    header <- ""
   } else {
     header <- paste("ldwdev",
                     switch(severity,
@@ -39,7 +53,6 @@ dev__msg <- function(txt,
   chunk.size <- nchar(chunks)
 
   # remove empty chunk in position 1 (if txt starts with whitespace)
-  empty.idx <- which(chunk.size == 0)
   if (chunk.size[1L] == 0L) {
     chunks <- chunks[-1L]
     chunk.size <- chunk.size[-1]
@@ -47,8 +60,8 @@ dev__msg <- function(txt,
 
   nstart <- 1L
   nstop <- 1L
-  while(nstart <= length(chunks)) {
-    while(sum(chunk.size[seq.int(nstart, nstop)]) + nstop - nstart + indent
+  while (nstart <= length(chunks)) {
+    while (sum(chunk.size[seq.int(nstart, nstop)]) + nstop - nstart + indent
           < txt.width && nstop < length(chunks)) {
       nstop <- nstop + 1
     }
