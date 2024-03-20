@@ -6,7 +6,7 @@ get_call_info <- function(map) {
     map <- paste0(map, "/R")
     files <- dir(map, pattern = "\\.[rR]$")
   }
-  if (length(files) == 0) send_msg(gettext("No R files found!"))
+  if (length(files) == 0) dev_stop(gettext("No R files found!"))
   if (map != ".") files <- paste0(map, "/", files)
   parsedfiles <- lapply(files, function(f) get_parsed(f))
   synoniemen <- list()
@@ -109,7 +109,7 @@ get_func_calltree <- function(map, func) {
     f <- func[i]
     funcind <- which(c(names(functies), names(synoniemen)) == f)
     if (length(funcind) == 0) {
-      send_msg(gettextf("function %s not found in R files!", f), 2L)
+      dev_warn(gettextf("function %s not found in R files!", f))
     } else {
       lijst[[f]] <- calltree(f, parents = character(0))
     }
