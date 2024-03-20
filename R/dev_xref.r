@@ -63,7 +63,7 @@ get_func_xref <- function(map = ".",
   })
   w <- sapply(seq_along(function.defs),
               function(x) !identical(function.defs[[x]], FALSE))
-  if (length(w) == 0) send_msg(gettext("no function definitions found."), 3L)
+  if (length(w) == 0) dev_stop(gettext("no function definitions found."))
   function.defs <- do.call(rbind, function.defs[w])
   function.defs <- function.defs[order(function.defs$text), ]
   references <- lapply(files, function(filename) {
