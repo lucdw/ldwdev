@@ -1,24 +1,39 @@
-# Displays a message (... concatenated with spaces in between) with header
-#   ''                  if called via dev_cat
-#   'ldwdev NOTE :'     if called via dev_note
-#   'ldwdev WARNING :'  if called via dev_warn
-#   'ldwdev ERROR :'    if called via dev_stop
+# Displays a message (... concatenated with spaces in between) without header
 # and formatted to have a maximum line length of 'txt.width'
 # while all but the first line start with 'indent' spaces
-# The message is displayed via cat, message, warning of stop depending on
-# the call.
-dev_cat <- dev_note <- dev_warn <- dev_stop <-
-  function(..., txt.width = 80L, indent = 2L) {
-  funcname <- as.character(sys.call()[1L])
-  header <- switch(funcname,
-                   dev_cat = "",
-                   dev_note = gettext("NOTE"),
-                   dev_warn = gettext("WARNING"),
-                   dev_stop = gettext("ERROR"))
-  if (funcname != "dev_cat") header <- paste("ldwdev", header, ":")
+dev_cat <- function(..., txt.width = 80L, indent = 4L) {
+  wat <- unlist(list(...), use.names = FALSE)
+  cat(dev__msg(wat, "", txt.width, indent))
+}
+
+# Displays a message with header 'ldwdev NOTE :' and formatted as
+# above via R function 'message'
+dev_note <- function(..., txt.width = 80L, indent = 4L) {
+  wat <- unlist(list(...), use.names = FALSE)
+  message(dev__msg(wat, gettext("NOTE"), txt.width, indent), domain = NA)
+}
+
+# Displays a message with header 'ldwdev WARNING :' and formatted as
+# above via R function 'warning'
+dev_warn <- function(..., txt.width = 80L, indent = 4L) {
+  wat <- unlist(list(...), use.names = FALSE)
+  warning(dev__msg(wat, gettext("WARNING"), txt.width, indent),
+          call. = FALSE, domain = NA)
+}
+
+# Displays a message with header 'ldwdev ERROR :' and formatted as
+# above via R function 'stop'
+dev_stop <- function(..., txt.width = 80L, indent = 4L) {
+  wat <- unlist(list(...), use.names = FALSE)
+  stop(dev__msg(wat, gettext("ERROR"), txt.width, indent),
+       call. = FALSE, domain = NA)
+}
+
+# subroutine for above functions
+dev__msg <- function(wat, header = "", txt.width = 80L, indent = 2L) {
+  if (header != "") header <- paste("ldwdev", header, ":")
   # make sure we only have a single string
-  txt <- unlist(list(...), use.names = FALSE)
-  txt <- paste(txt, collapse = " ")
+  txt <- paste(wat, collapse = " ")
   # split the txt in little chunks
   chunks <- strsplit(paste(header, txt), "\\s+", fixed = FALSE)[[1]]
 
@@ -45,9 +60,5 @@ dev_cat <- dev_note <- dev_warn <- dev_stop <-
     nstart <- nstop + 1L
     nstop <- nstart
   }
-  msg <- paste(chunks, collapse = " ")
-  if (funcname == "dev_cat") cat(msg)
-  if (funcname == "dev_note") message(msg, domain = NA)
-  if (funcname == "dev_warn") warning(msg, call. = FALSE, domain = NA)
-  if (funcname == "dev_stop") stop(msg, call. = FALSE, domain = NA)
+  paste(chunks, collapse = " ")
 }
