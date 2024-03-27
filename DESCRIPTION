@@ -1,10 +1,10 @@
 Package: ldwdev
 Type: Package
 Title: Utilities for development R package
-Version: 0.1.2
+Version: 0.1.3
 Author: Luc De Wilde
 Maintainer: Luc De Wilde <Luc.DeWilde@uGent.be>
-Depends: R (>= 3.1.0), cyclocomp
+Depends: R (>= 3.1.0), cyclocomp, methods
 Description: This package contains utilities to help me
     for working on lavaan code.
 License: GPL-2

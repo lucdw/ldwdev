@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 4.3.2\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2024-03-19 09:14\n"
+"POT-Creation-Date: 2024-03-27 11:48\n"
 "PO-Revision-Date: 2024-03-18 16:59\n"
 "Last-Translator: Luc De Wilde <luc.dewilde@ugent.be>\n"
 "Language-Team: en <LL@li.org>\n"
@@ -11,26 +11,44 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-msgid "infile1 empty"
-msgstr "infile1 is leeg"
-
-msgid "infile2 empty"
-msgstr "infile2 is leeg"
-
 msgid "No R files found!"
 msgstr "Geen R bestanden gevonden."
 
 msgid "function %s not found in R files!"
 msgstr "Functie %s niet gevonden in de R bestanden!"
 
-msgid "NOTE"
-msgstr "NOTA"
+msgid "infile1 empty"
+msgstr "infile1 is leeg"
 
-msgid "WARNING"
-msgstr "WAARSCHUWING"
+msgid "infile2 empty"
+msgstr "infile2 is leeg"
 
-msgid "ERROR"
-msgstr "FOUT"
+msgid "Differences between %s and %s"
+msgstr "Verschillen tussen %s en %s"
+
+msgid "%1$s types are different: %2$s <-> %3$s"
+msgstr "%1$s types zijn verschillend: %2$s <-> %3$s"
+
+msgid "%1$s have different classes: %2$s <-> %3$s"
+msgstr "%1$s hebben verschlllende klassen: %2$s <-> %3$s"
+
+msgid "Maximum number of differences reached!"
+msgstr "Maximum aantal verschillen bereikt!"
+
+msgid "%1$s have different names: %2$s <-> %3$s"
+msgstr "%1$s hebben verschillende namen: %2$s <-> %3$s"
+
+msgid "%1$s have different length: %2$d <-> %3$d"
+msgstr "%1$s hebben verschillende lengte: %2$d <-> %3$d"
+
+msgid "%1$s:%2$s differ: %3$s <-> %4$s"
+msgstr "%1$s:%2$s verschillen: %3$s <-> %4$s"
+
+msgid "and"
+msgstr "en"
+
+msgid "or"
+msgstr "of"
 
 msgid "file %s cannot be parsed"
 msgstr "Bestand %s kan niet geparseerd worden."
@@ -44,6 +62,5 @@ msgstr "Dit is"
 msgid "is a package with simple tools for package development."
 msgstr "is een pakket met simpele hulpmiddelen voor pakketontwikkeling."
 
-#, fuzzy
-#~ msgid "ldwdev WARNING:"
-#~ msgstr "WAARSCHUWING"
+#~ msgid "NOTE"
+#~ msgstr "NOTA"
