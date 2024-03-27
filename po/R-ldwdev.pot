@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: ldwdev 0.1.2\n"
-"POT-Creation-Date: 2024-03-19 09:14\n"
+"POT-Creation-Date: 2024-03-27 12:02\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -10,25 +10,43 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-msgid "infile1 empty"
-msgstr ""
-
-msgid "infile2 empty"
-msgstr ""
-
 msgid "No R files found!"
 msgstr ""
 
 msgid "function %s not found in R files!"
 msgstr ""
 
-msgid "NOTE"
+msgid "infile1 empty"
 msgstr ""
 
-msgid "WARNING"
+msgid "infile2 empty"
 msgstr ""
 
-msgid "ERROR"
+msgid "Differences between %s and %s"
+msgstr ""
+
+msgid "%1$s types are different: %2$s <-> %3$s"
+msgstr ""
+
+msgid "%1$s have different classes: %2$s <-> %3$s"
+msgstr ""
+
+msgid "Maximum number of differences reached!"
+msgstr ""
+
+msgid "%1$s have different names: %2$s <-> %3$s"
+msgstr ""
+
+msgid "%1$s have different length: %2$d <-> %3$d"
+msgstr ""
+
+msgid "%1$s:%2$s differ: %3$s <-> %4$s"
+msgstr ""
+
+msgid "and"
+msgstr ""
+
+msgid "or"
 msgstr ""
 
 msgid "file %s cannot be parsed"
