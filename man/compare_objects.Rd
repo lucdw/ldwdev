@@ -7,11 +7,9 @@
 compare_objects(object1, object2, outfile = "", max.diff = 30L)
 }
 \arguments{
-\item{object1}{a connection or a character vector of length 1
-with the path to the first file}
+\item{object1}{the first R object}
 
-\item{object2}{a connection or a character vector of length 1
-with the path to the second file}
+\item{object2}{the second R object}
 
 \item{outfile}{a connection or a character vector of length 1
 with the path to the output file, if "" write to

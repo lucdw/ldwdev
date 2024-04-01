@@ -172,10 +172,8 @@ compare_files <- function(infile1, infile2,                       # nolint
 #' This function compares two R objects and writes the differences to a
 #' connection or the console.
 #'
-#' @param object1 a connection or a character vector of length 1
-#'                with the path to the first file
-#' @param object2 a connection or a character vector of length 1
-#'                with the path to the second file
+#' @param object1 the first R object
+#' @param object2 the second R object
 #' @param outfile a connection or a character vector of length 1
 #'                with the path to the output file, if "" write to
 #'                console
