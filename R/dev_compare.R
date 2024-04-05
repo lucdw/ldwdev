@@ -175,11 +175,13 @@ compare_files <- function(infile1, infile2,                       # nolint
 #' @param object1 the first R object
 #' @param object2 the second R object
 #' @param outfile a connection or a character vector of length 1
-#'                with the path to the output file, if "" write to
-#'                console
+#'                with the path to the output file, if "" (default) write to
+#'                console, if FALSE output is returned, see Value.
 #' @param max.diff maximum number of differences to show, default 30L
 #'
-#' @return number of differences reported
+#' @return number of differences reported or, if outfile FALSE,
+#'  character vector with differences and attribute 'diff' the number of
+#'  differences found.
 #'
 #' @examples
 #' lst1 <- list(a = 2, b = 2:4, c = c("a", "b"))
@@ -189,52 +191,66 @@ compare_files <- function(infile1, infile2,                       # nolint
 #' compare_objects(lst2, lst3)
 #' compare_objects(lst2, lst4 <- lst2)
 #' compare_objects(letters, LETTERS, max.diff = 10L)
+#' str(compare_objects(lst2, lst3, outfile = FALSE))
 #'
 #' @author Luc De Wilde
 #' @name compare_objects
 #' @rdname compare_objects
 #' @export
-compare_objects <- function(object1, object2, outfile = "", max.diff = 30L) {
-  stopifnot(is.character(outfile) || inherits(outfile, "connection"))
+compare_objects <- function(
+    object1,
+    object2,
+    outfile = "",
+    max.diff = 30L) {
+  stopifnot(is.character(outfile) || inherits(outfile, "connection") ||
+              identical(outfile, FALSE))
   stopifnot(is.numeric(max.diff) && as.integer(max.diff) > 0L)
   string1 <- deparse1(substitute(object1))
   string2 <- deparse1(substitute(object2))
+  reportlines <- character(0)
   aantal <- 0
   my.env <- environment()
   where <- ""
   compare_values(object1, object2, where, my.env)
-  return(aantal)
+  if (identical(outfile, FALSE)) {
+    attr(reportlines, "diff") <- aantal
+    return(reportlines)
+  } else {
+    cat(c(reportheader(my.env), reportlines), file = outfile, sep = "\n")
+    return(aantal)
+  }
 }
 reportheader <- function(env) {
   string1 <- get("string1", env)
   string2 <- get("string2", env)
   outfile <- get("outfile", env)
-  cat(gettextf("Differences between %s and %s", string1, string2),
-      file = outfile)
-  cat("\n", strrep("-", 44L + nchar(string1) + nchar(string2)), "\n\n",
-      file = outfile)
+  hdr <- gettextf("Differences between %s and %s", string1, string2)
+  c(hdr, strrep("-", nchar(hdr)), "")
 }
 compare_values <- function(val1, val2, where, env) {
   if (identical(val1, val2)) return()
   differences <- get("aantal", env)
+  lines <- get("reportlines", env)
   max.differences <- get("max.diff", env)
   outfile <- get("outfile", env)
   class1 <- class(val1)
   class2 <- class(val2)
   if (typeof(val1) != typeof(val2)) {
-    if (differences == 0) reportheader(env)
-    cat(gettextf("%1$s types are different: %2$s <-> %3$s",
-                     where, typeof(val1), typeof(val2)),"\n", file = outfile)
+    lines <- c(lines,
+               gettextf("%1$s types are different: %2$s <-> %3$s",
+               where, typeof(val1), typeof(val2)))
     differences <- differences + 1L
     assign("aantal", differences, env)
+    assign("reportlines", lines, env)
     return() # no further examination if types are different
   }
   if (!setequal(class1, class2)) {
     if (differences == 0) reportheader(env)
-    cat(gettextf("%1$s have different classes: %2$s <-> %3$s",
-                     where, dev_msg_view(class1), dev_msg_view(class2)),
-       "\n", file = outfile)
+    lines <- c(lines,
+               gettextf("%1$s have different classes: %2$s <-> %3$s",
+               where, tostring(class1), tostring(class2)))
     assign("aantal", differences + 1L, env)
+    assign("reportlines", lines, env)
     return() # no further examination if classes different
   }
   if (isS4(val1)) { # handle slots of S4 classes
@@ -243,8 +259,9 @@ compare_values <- function(val1, val2, where, env) {
                      paste0(where, "@", slot.name), env)
       aantalnu <- get("aantal", env)
       if (aantalnu >= max.differences) {
-        cat(gettext("Maximum number of differences reached!"),"\n",
-            file = outfile)
+        lines <- c(lines,
+                   gettext("Maximum number of differences reached!"))
+        assign("reportlines", lines, env)
         break
       }
     }
@@ -258,20 +275,20 @@ compare_values <- function(val1, val2, where, env) {
     return()
   }
   if (!identical(names(val1),names(val2))) {
-    if (differences == 0) reportheader(env)
-    cat(gettextf("%1$s have different names: %2$s <-> %3$s",
-                     where, dev_msg_view(names(val1)),
-                     dev_msg_view(names(val2))),"\n", file = outfile)
+    lines <- c(lines,
+               gettextf("%1$s have different names: %2$s <-> %3$s",
+                     where, tostring(names(val1)), tostring(names(val2))))
     differences <- differences + 1L
     assign("aantal", differences, env)
+    assign("reportlines", lines, env)
     return() # no further examination if names different
   }
   if (length(val1) != length(val2)) {
-    if (differences == 0) reportheader(env)
-    cat(gettextf("%1$s have different length: %2$d <-> %3$d",
-                     where, length(val1), length(val2)),"\n", file = outfile)
+    lines <- c(lines, gettextf("%1$s have different length: %2$d <-> %3$d",
+                     where, length(val1), length(val2)))
     differences <- differences + 1L
     assign("aantal", differences, env)
+    assign("reportlines", lines, env)
     return() # no further examination if names different
   }
   elem.names <- names(val1)
@@ -284,17 +301,16 @@ compare_values <- function(val1, val2, where, env) {
       elem.name <- elem.names[i]
       if (is.na(val1[i]) && is.na(val2[i])) next
       if (is.na(val1[i]) || is.na(val2[i]) || val1[i] != val2[i]) {
-        if (differences == 0) reportheader(env)
-        cat(gettextf("%1$s[%2$s] differ: %3$s <-> %4$s",
+        lines <- c(lines, gettextf("%1$s[%2$s] differ: %3$s <-> %4$s",
                      where, elem.name,
-                     dev_msg_view(as.vector(val1[i])),
-                     dev_msg_view(as.vector(val2[i]))),
-           "\n", file = outfile)
+                     tostring(as.vector(val1[i])),
+                     tostring(as.vector(val2[i]))))
         assign("aantal", differences + 1L, env)
+        assign("reportlines", lines, env)
         differences <- differences + 1L
         if (differences >= max.differences) {
-          cat(gettext("Maximum number of differences reached!"),
-              file = outfile)
+          lines <- c(lines, gettext("Maximum number of differences reached!"))
+          assign("reportlines", lines, env)
           break
         }
       }

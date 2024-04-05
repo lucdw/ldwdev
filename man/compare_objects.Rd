@@ -12,13 +12,15 @@ compare_objects(object1, object2, outfile = "", max.diff = 30L)
 \item{object2}{the second R object}
 
 \item{outfile}{a connection or a character vector of length 1
-with the path to the output file, if "" write to
-console}
+with the path to the output file, if "" (default) write to
+console, if FALSE output is returned, see Value.}
 
 \item{max.diff}{maximum number of differences to show, default 30L}
 }
 \value{
-number of differences reported
+number of differences reported or, if outfile FALSE,
+ character vector with differences and attribute 'diff' the number of
+ differences found.
 }
 \description{
 This function compares two R objects and writes the differences to a
@@ -32,6 +34,7 @@ compare_objects(lst1, lst2)
 compare_objects(lst2, lst3)
 compare_objects(lst2, lst4 <- lst2)
 compare_objects(letters, LETTERS, max.diff = 10L)
+str(compare_objects(lst2, lst3, outfile = FALSE))
 
 }
 \author{
