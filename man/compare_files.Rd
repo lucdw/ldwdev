@@ -2,7 +2,7 @@
 % Please edit documentation in R/dev_compare.R
 \name{compare_files}
 \alias{compare_files}
-\title{The compare_files function}
+\title{Compare two text files}
 \usage{
 compare_files(
   infile1,

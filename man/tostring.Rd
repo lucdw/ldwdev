@@ -2,7 +2,7 @@
 % Please edit documentation in R/dev_tostring.R
 \name{tostring}
 \alias{tostring}
-\title{The tostring function}
+\title{Creates a character representation of an R object}
 \usage{
 tostring(
   x,

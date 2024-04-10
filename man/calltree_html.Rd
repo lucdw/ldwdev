@@ -2,7 +2,7 @@
 % Please edit documentation in R/dev_calltree.r
 \name{calltree_html}
 \alias{calltree_html}
-\title{The calltree_html function}
+\title{Create a html website with functions and calls between them of a package}
 \usage{
 calltree_html(map, dest)
 }

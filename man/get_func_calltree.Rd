@@ -2,7 +2,7 @@
 % Please edit documentation in R/dev_calltree.r
 \name{get_func_calltree}
 \alias{get_func_calltree}
-\title{The get_func_calltree function}
+\title{Create a call tree for a function in the r files of a package}
 \usage{
 get_func_calltree(map, func)
 }

@@ -2,9 +2,9 @@
 % Please edit documentation in R/dev_compare.R
 \name{compare_objects}
 \alias{compare_objects}
-\title{The compare_objects function}
+\title{Compare two R objects}
 \usage{
-compare_objects(object1, object2, outfile = "", max.diff = 30L)
+compare_objects(object1, object2, outfile = "", ignore = NULL, max.diff = 30L)
 }
 \arguments{
 \item{object1}{the first R object}
@@ -14,6 +14,9 @@ compare_objects(object1, object2, outfile = "", max.diff = 30L)
 \item{outfile}{a connection or a character vector of length 1
 with the path to the output file, if "" (default) write to
 console, if FALSE output is returned, see Value.}
+
+\item{ignore}{regular expression(s) for name of slots or elements (of a
+list) to ignore in comparing}
 
 \item{max.diff}{maximum number of differences to show, default 30L}
 }
@@ -35,6 +38,7 @@ compare_objects(lst2, lst3)
 compare_objects(lst2, lst4 <- lst2)
 compare_objects(letters, LETTERS, max.diff = 10L)
 str(compare_objects(lst2, lst3, outfile = FALSE))
+compare_objects(lst2, lst3, ignore = "c")
 
 }
 \author{

@@ -52,7 +52,7 @@ get_call_info <- function(map) {
   return(list(functies = functies, synoniemen = synoniemen,
               calls = listcalls, xrefs = xref))
 }
-#' The get_func_calltree function
+#' Create a call tree for a function in the r files of a package
 #'
 #' This function makes creates a call tree for a function
 #' in the r files of a package.
@@ -117,7 +117,7 @@ get_func_calltree <- function(map, func) {
   class(lijst) <- c("calltree", class(lijst))
   lijst
 }
-#' The print.calltree function
+#' Prints a calltree made with get_func_calltree()
 #'
 #' This function prints a call tree in a readable format.
 #'
@@ -161,7 +161,7 @@ print.calltree <- summary.calltree <- function(x, ...) {
     i <- i + 1L
   }
 }
-#' The calltree_html function
+#' Create a html website with functions and calls between them of a package
 #'
 #' This function creates a html website with all R functions of a package
 #'

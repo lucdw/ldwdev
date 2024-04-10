@@ -1,4 +1,4 @@
-#' The tostring function
+#' Creates a character representation of an R object
 #'
 #' Transforms a value to a character representation e.g. for use in messages.
 #'

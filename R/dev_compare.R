@@ -23,7 +23,7 @@ ldw_lines_to_text <- function(welke) {
     return(c(welke12, "d", welke34))
   }
 }
-#' The compare_files function
+#' Compare two text files
 #'
 #' This function compares two text files and stores the differences in a
 #' typical .diff file.
@@ -167,7 +167,7 @@ compare_files <- function(infile1, infile2,                       # nolint
   if (is.character(outfile)) close(oc)
   return(aantal)
 }
-#' The compare_objects function
+#' Compare two R objects
 #'
 #' This function compares two R objects and writes the differences to a
 #' connection or the console.
@@ -177,6 +177,8 @@ compare_files <- function(infile1, infile2,                       # nolint
 #' @param outfile a connection or a character vector of length 1
 #'                with the path to the output file, if "" (default) write to
 #'                console, if FALSE output is returned, see Value.
+#' @param ignore regular expression(s) for name of slots or elements (of a
+#'               list) to ignore in comparing
 #' @param max.diff maximum number of differences to show, default 30L
 #'
 #' @return number of differences reported or, if outfile FALSE,
@@ -192,6 +194,7 @@ compare_files <- function(infile1, infile2,                       # nolint
 #' compare_objects(lst2, lst4 <- lst2)
 #' compare_objects(letters, LETTERS, max.diff = 10L)
 #' str(compare_objects(lst2, lst3, outfile = FALSE))
+#' compare_objects(lst2, lst3, ignore = "c")
 #'
 #' @author Luc De Wilde
 #' @name compare_objects
@@ -201,6 +204,7 @@ compare_objects <- function(
     object1,
     object2,
     outfile = "",
+    ignore = NULL,
     max.diff = 30L) {
   stopifnot(is.character(outfile) || inherits(outfile, "connection") ||
               identical(outfile, FALSE))
@@ -211,7 +215,7 @@ compare_objects <- function(
   aantal <- 0
   my.env <- environment()
   where <- ""
-  compare_values(object1, object2, where, my.env)
+  compare_values(object1, object2, where, my.env, ignore)
   if (identical(outfile, FALSE)) {
     attr(reportlines, "diff") <- aantal
     return(reportlines)
@@ -227,7 +231,7 @@ reportheader <- function(env) {
   hdr <- gettextf("Differences between %s and %s", string1, string2)
   c(hdr, strrep("-", nchar(hdr)), "")
 }
-compare_values <- function(val1, val2, where, env) {
+compare_values <- function(val1, val2, where, env, ignore) {
   if (identical(val1, val2)) return()
   differences <- get("aantal", env)
   lines <- get("reportlines", env)
@@ -255,8 +259,9 @@ compare_values <- function(val1, val2, where, env) {
   }
   if (isS4(val1)) { # handle slots of S4 classes
     for (slot.name in slotNames(val1)) {
+      if (any(sapply(ignore, function(re) grepl(re, slot.name)))) next
       compare_values(slot(val1, slot.name), slot(val2, slot.name),
-                     paste0(where, "@", slot.name), env)
+                     paste0(where, "@", slot.name), env, ignore)
       aantalnu <- get("aantal", env)
       if (aantalnu >= max.differences) {
         lines <- c(lines,
@@ -269,8 +274,9 @@ compare_values <- function(val1, val2, where, env) {
   }
   if (is.list(val1)) { # handle elements of lists
     for (elem.name in names(val1)) {
+      if (any(sapply(ignore, function(re) grepl(re, elem.name)))) next
       compare_values(val1[[elem.name]], val2[[elem.name]],
-                     paste0(where, "$", elem.name), env)
+                     paste0(where, "$", elem.name), env, ignore)
     }
     return()
   }
@@ -289,7 +295,7 @@ compare_values <- function(val1, val2, where, env) {
     differences <- differences + 1L
     assign("aantal", differences, env)
     assign("reportlines", lines, env)
-    return() # no further examination if names different
+    return() # no further examination if lengths different
   }
   elem.names <- names(val1)
   if (is.null(elem.names)) {

@@ -2,7 +2,7 @@
 % Please edit documentation in R/dev_calltree.r
 \name{print.calltree}
 \alias{print.calltree}
-\title{The print.calltree function}
+\title{Prints a calltree made with get_func_calltree()}
 \usage{
 \method{print}{calltree}(x, ...)
 }
