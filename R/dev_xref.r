@@ -3,12 +3,12 @@
 #' This function makes creates a cross-reference of the variabels for
 #' all functions defined on the top-level in a .R-file.
 #'
-#' @param file a character vector item naming the files to search in
+#' @param file a character vector naming the files to search in
 #'
 #' @return list with for each top.level function a named list with:
-#'  'FUNC__FILE_' the name of the file where function is found
-#'  'FUNC__OFFSET_' number of lines before the function definition
-#'  the variables used and the relative line where they are used
+#' * FUNC__FILE_ the name of the file where function is found;
+#' * FUNC__OFFSET_ number of lines before the function definition;
+#' * the variables used and the relative line where they are used.
 #'
 #' @examples
 #' filename <- tempfile(fileext = ".R")

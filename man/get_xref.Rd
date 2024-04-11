@@ -7,13 +7,15 @@
 get_xref(file = "")
 }
 \arguments{
-\item{file}{a character vector item naming the files to search in}
+\item{file}{a character vector naming the files to search in}
 }
 \value{
 list with for each top.level function a named list with:
- 'FUNC__FILE_' the name of the file where function is found
- 'FUNC__OFFSET_' number of lines before the function definition
- the variables used and the relative line where they are used
+\itemize{
+\item FUNC__FILE_ the name of the file where function is found;
+\item FUNC__OFFSET_ number of lines before the function definition;
+\item the variables used and the relative line where they are used.
+}
 }
 \description{
 This function makes creates a cross-reference of the variabels for

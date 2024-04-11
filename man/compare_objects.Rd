@@ -22,8 +22,8 @@ list) to ignore in comparing}
 }
 \value{
 number of differences reported or, if outfile FALSE,
- character vector with differences and attribute 'diff' the number of
- differences found.
+character vector with differences and attribute 'diff' the number of
+differences found.
 }
 \description{
 This function compares two R objects and writes the differences to a

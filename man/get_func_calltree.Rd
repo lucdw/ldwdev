@@ -15,9 +15,9 @@ a calltree is demanded}
 \value{
 recursive list of functions with called functions,
 when the called function also appears higher in the
- branch followed by ":RECURSIVE" and if the called function
-  has no further (package) functions
- called followed by ":TERMINAL"
+branch followed by ":RECURSIVE" and if the called function
+has no further (package) functions
+called followed by ":TERMINAL"
 }
 \description{
 This function makes creates a call tree for a function
