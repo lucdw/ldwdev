@@ -7,11 +7,13 @@
 get_xref(file = "")
 }
 \arguments{
-\item{file}{a character item naming the file to search in}
+\item{file}{a character vector item naming the files to search in}
 }
 \value{
-list with for each top.level function a list of variables used
- and where they are used
+list with for each top.level function a named list with:
+ 'FUNC__FILE_' the name of the file where function is found
+ 'FUNC__OFFSET_' number of lines before the function definition
+ the variables used and the relative line where they are used
 }
 \description{
 This function makes creates a cross-reference of the variabels for
@@ -27,13 +29,17 @@ writeLines(c(
 ), filename)
 tmp <- get_xref(filename)
 for (j in seq_along(tmp)) {
-  cat("function ", names(tmp)[j], ":\n")
+  cat("function ", names(tmp)[j])
   tmp1 <- tmp[[j]]
+  cat(" found in", tmp1$FUNC__FILE_, "at offset", tmp1$FUNC__OFFSET_, ".\n")
+  tmp1$FUNC__FILE_ <- NULL
+  tmp1$FUNC__OFFSET_ <- NULL
   for (k in seq_along(tmp1)) {
     cat("  ", names(tmp1)[k], ":",
     tostring(tmp1[[k]], "none"), "\n")
   }
 }
+unlink(filename)
 
 }
 \author{

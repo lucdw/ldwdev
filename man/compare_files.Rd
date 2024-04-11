@@ -48,6 +48,7 @@ cat(readLines(outfil), sep="\n")
 compare_files(filenames[1], filenames[2], outfil, equal.lines = 3L)
 cat(readLines(outfil), sep="\n")
 close(outfil)
+unlink(filenames)
 
 }
 \author{
