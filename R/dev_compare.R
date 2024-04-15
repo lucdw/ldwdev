@@ -71,7 +71,12 @@ compare_files <- function(infile1, infile2,                       # nolint
   stopifnot(is.character(outfile) || inherits(outfile, "connection"))
   stopifnot(is.null(remove.lines) || is.character(remove.lines))
   equal.lines <- as.integer(equal.lines)
-  stopifnot(equal.lines > 1L)
+  if (equal.lines < 2L) {
+    dev_stop(gettext("equal.lines must be at least 2"))
+  }
+  if (is.character(infile1) && !file.exists(infile1)) {
+    dev_stop(gettextf("%s file not found!", infile1))
+  }
   suppressWarnings(lines1 <- readLines(infile1))
   if (length(lines1) == 0L) dev_stop(gettext("infile1 empty"))
   if (!is.character(infile1) && isOpen(infile1, "r")) close(infile1)
@@ -80,6 +85,9 @@ compare_files <- function(infile1, infile2,                       # nolint
       toremove <- grepl(rml, lines1, fixed = TRUE)
       lines1 <- lines1[!toremove]
     }
+  }
+  if (is.character(infile2) && !file.exists(infile2)) {
+    dev_stop(gettextf("%s file not found!", infile2))
   }
   suppressWarnings(lines2 <- readLines(infile2))
   if (length(lines2) == 0L) dev_stop(gettext("infile2 empty"))
@@ -228,7 +236,6 @@ compare_objects <- function(
 reportheader <- function(env) {
   string1 <- get("string1", env)
   string2 <- get("string2", env)
-  outfile <- get("outfile", env)
   hdr <- gettextf("Differences between %s and %s", string1, string2)
   c(hdr, strrep("-", nchar(hdr)), "")
 }
@@ -248,6 +255,10 @@ compare_values <- function(val1, val2, where, env, ignore) {
     assign("aantal", differences, env)
     assign("reportlines", lines, env)
     return() # no further examination if types are different
+  }
+  if (any(typeof(val1) == c("closure", "language"))) {
+    dev_warn(gettextf("objects of type '%s' are not compared", typeof(val1)))
+    return()
   }
   if (!setequal(class1, class2)) {
     if (differences == 0) reportheader(env)

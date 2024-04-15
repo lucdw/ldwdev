@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: ldwdev 0.1.2\n"
-"POT-Creation-Date: 2024-03-27 12:02\n"
+"Project-Id-Version: ldwdev 0.1.5\n"
+"POT-Creation-Date: 2024-04-12 08:55\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,12 @@ msgstr ""
 msgid "function %s not found in R files!"
 msgstr ""
 
+msgid "equal.lines must be at least 2"
+msgstr ""
+
+msgid "%s file not found!"
+msgstr ""
+
 msgid "infile1 empty"
 msgstr ""
 
@@ -26,6 +32,9 @@ msgid "Differences between %s and %s"
 msgstr ""
 
 msgid "%1$s types are different: %2$s <-> %3$s"
+msgstr ""
+
+msgid "objects of type '%s' are not compared"
 msgstr ""
 
 msgid "%1$s have different classes: %2$s <-> %3$s"
@@ -40,7 +49,7 @@ msgstr ""
 msgid "%1$s have different length: %2$d <-> %3$d"
 msgstr ""
 
-msgid "%1$s:%2$s differ: %3$s <-> %4$s"
+msgid "%1$s[%2$s] differ: %3$s <-> %4$s"
 msgstr ""
 
 msgid "and"
@@ -50,9 +59,6 @@ msgid "or"
 msgstr ""
 
 msgid "file %s cannot be parsed"
-msgstr ""
-
-msgid "no function definitions found."
 msgstr ""
 
 msgid "This is"

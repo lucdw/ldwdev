@@ -110,3 +110,139 @@ get_composite_name <- function(subsubs, parseddata) {
          coll,
          subsubs$text[3L])
 }
+
+
+#' Create a html page with functions and xrefs of variables
+#'
+#' This function creates a html page with all R functions in a list
+#' of R-files and the variables used therein.
+#'
+#' @details
+#' The function determines the functions in the R files by
+#' looking at the top-level assignments. Only
+#'  LEFT_ASSIGN \code{'<-'} symbols are looked at!
+#'
+#' @param file vector of filenames to look in
+#' @param dest the directory where the html files should be written
+#' @param title the title for the html file
+#'
+#' @return NULL
+#'
+#' @examples
+#' \dontrun{
+#'  temp <- xref_html(paste0("R/", c("dev_calltree", "dev_util"), ".R"),
+#'                         "c:/temp/examplexref")
+#' }
+#'
+#' @author Luc De Wilde
+#' @name xref_html
+#' @rdname xref_html
+#' @export
+xref_html <- function(file, dest, title = paste("Xref", dirname(file[1L]))) {
+  stopifnot(is.character(dest), length(dest) == 1L)
+  tmp <- get_xref(file)
+  tmpnamen <- names(tmp)
+  aantal <- 0L
+  for (i in seq_along(tmp)) {
+    aantal <- aantal + length(tmp[[i]]) - 2
+  }
+  functienamen <- varnamen <- lijnen <- rep("",aantal)
+  k <- 0L
+  for (i in seq_along(tmp)) {
+    tmpinamen <- names(tmp[[i]])
+    for (j in seq_along(tmp[[i]])) {
+      if (tmpinamen[j] == "FUNC__FILE_") next
+      if (tmpinamen[j] == "FUNC__OFFSET_") next
+      k <- k + 1L
+      functienamen[k] <- tmpnamen[i]
+      varnamen[k] <- tmpinamen[j]
+      lijnen[k] <- tostring(tmp[[i]][[j]], "none")
+    }
+  }
+  volgorde <- order(functienamen, varnamen)
+  functienamen <- functienamen[volgorde]
+  varnamen <- varnamen[volgorde]
+  lijnen <- lijnen[volgorde]
+  if (!dir.exists(dest)) dir.create(dest)
+  sink(paste0(dest, "/index.html"))
+  cat("<!DOCTYPE html>
+<html>
+<head>
+<title>", title, "</title>
+<style>
+h1 {
+ color: #1e64C8;
+}
+p.lijst {
+ margin-top: 0.5em;
+ margin-bottom: 0.5em;
+}
+p.lijst:nth-child(even) {
+  background-color: #dddddd;
+}
+div.mycontainer {
+  width:95%;
+  overflow:auto;
+}
+div.mycontainer div {
+  width:45%;
+  float:left;
+  border-style: solid;
+  border-width: 5px;
+  margin: 4px;
+}
+</style>
+<script>
+const funcvar = [",
+paste("[\"", functienamen, "\", \"", varnamen, "\", \"",
+      lijnen , "\"],\n", sep = ""),
+"];
+let fvLen = funcvar.length;
+function ShowFunc(funcname){
+  text = \"<H1>Function \" + funcname + \"</H1><table>\";
+  text += \"<tr><th>Variable</th><th>Lines where used</th></tr>\";
+  for (let i = 0; i < fvLen; i++) {
+    if (funcvar[i][0] == funcname)
+      text += \"<tr><td><button type='button' onclick='ShowVar(\\\"\" +
+        funcvar[i][1] + \"\\\");'>\" + funcvar[i][1] +
+        \"</button></td><td>\" + funcvar[i][2] + \"</td></tr>\\n\";
+  }
+  text += \"</table>\";
+  document.getElementById(\"links\").innerHTML = text;
+}
+function ShowVar(varname){
+  text = \"<H1>Variable \" + varname + \"</H1><table>\";
+  text += \"<tr><th>Function</th><th>Lines where used</th></tr>\";
+  for (let i = 0; i < fvLen; i++) {
+    if (funcvar[i][1] == varname)
+      text += \"<tr><td><button type='button' onclick='ShowFunc(\\\"\" +
+        funcvar[i][0] + \"\\\");'>\" + funcvar[i][0] +
+        \"</button></td><td>\" + funcvar[i][2] + \"</td></tr>\\n\";
+  }
+  text += \"</table>\";
+  document.getElementById(\"rechts\").innerHTML = text;
+}
+function FromSelect() {
+  Selector = document.getElementById('selector');
+  ShowFunc(Selector.value);
+}
+window.onload = function() {
+  FromSelect();
+}
+</script>
+</head>
+<body>
+  <h1>Xref functions in ", tostring(file, "and", "single"), ".</h1>\n",
+"  <select id='selector' onchange='FromSelect()' title='Choose function'>",
+        sep = "")
+  for (functienaam in tmpnamen) {
+    cat("<option value='", functienaam, "'>", functienaam, "</option>\n",
+        sep = "")
+  }
+  cat("</select>\n<div class='mycontainer'>
+  <div id='links' name='links' style=\"border-color:#ffd200;\"></div>
+  <div id='rechts' name='rechts' style=\"border-color:#1e64c8;\"></div>
+  </div></body>\n</html>\n")
+  sink()
+  browseURL(paste0(dest, "/index.html"))
+}

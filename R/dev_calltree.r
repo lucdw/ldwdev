@@ -366,7 +366,7 @@ sink(paste0(dest, "/index.html"))
 cat("<!DOCTYPE html>
 <html>
 <head>
-<title>all functions</title>
+<title>functions calltree</title>
 <style>
 h1 {
  color: #1e64C8;

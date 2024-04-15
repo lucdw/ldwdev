@@ -28,10 +28,11 @@ dev_stop <- function(...) {
 }
 
 # subroutine for above functions
-dev_msg <- function(wat, txt.width = 80L, indent = 2L) {
+dev_msg <- function(wat, txt.width = getOption("width", 80L), indent = 2L) {
   x <- sub("[() ].*$", "", as.character(sys.calls()))
   ignore.in.stack <- c(
-    "^eval$", "^try", "^doTryCatch", "^dev_msg", "^stop$", "^warn$",
+    "^eval$", "^try", "^doTryCatch", "^dev_stop", "^dev_warn", "^warning$",
+    "^stop$", "^dev_note", "^dev_cat", "^dev_msg",
     "^which$", "^unique$", "^as\\.", "^unlist$", "^message$",
     "^source$", "^withVisible$", "^tryCatch.W.E$", "^withCallingHandlers$",
     "^do.call$"
@@ -44,7 +45,7 @@ dev_msg <- function(wat, txt.width = 80L, indent = 2L) {
   if (length(x) == 0) {
     header <- "ldwdev:"
   } else {
-    header <- paste0("ldwdev(", x[length(x)], "):")
+    header <- paste0("ldwdev->", x[length(x)], "():")
   }
   # make sure we only have a single string
   txt <- paste(wat, collapse = " ")
@@ -63,16 +64,20 @@ dev_msg <- function(wat, txt.width = 80L, indent = 2L) {
   nstart <- 1L
   nstop <- 1L
   while (nstart <= length(chunks)) {
-    while (sum(chunk.size[seq.int(nstart, nstop)]) + nstop - nstart + indent
-          < txt.width && nstop < length(chunks)) {
+    while (nstop < length(chunks) &&
+           sum(chunk.size[seq.int(nstart, nstop + 1L)]) +
+           nstop - nstart + indent < txt.width) {
       nstop <- nstop + 1
     }
     if (nstop < length(chunks)) {
-      chunks[nstop + 1L] <- paste0("\n", strrep(" ", indent),
-                                   chunks[nstop + 1L])
+      chunks[nstop + 1L] <- paste0(
+        "\n", strrep(" ", indent),
+        chunks[nstop + 1L]
+      )
     }
     nstart <- nstop + 1L
     nstop <- nstart
   }
+
   paste(chunks, collapse = " ")
 }

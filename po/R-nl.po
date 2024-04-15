@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 4.3.2\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2024-03-27 11:48\n"
+"POT-Creation-Date: 2024-04-11 22:46\n"
 "PO-Revision-Date: 2024-03-18 16:59\n"
 "Last-Translator: Luc De Wilde <luc.dewilde@ugent.be>\n"
 "Language-Team: en <LL@li.org>\n"
@@ -17,6 +17,12 @@ msgstr "Geen R bestanden gevonden."
 msgid "function %s not found in R files!"
 msgstr "Functie %s niet gevonden in de R bestanden!"
 
+msgid "equal.lines must be at least 2"
+msgstr "equal.lines moet minstens 2 zijn"
+
+msgid "%s file not found!"
+msgstr "bestand %s niet gevonden!"
+
 msgid "infile1 empty"
 msgstr "infile1 is leeg"
 
@@ -28,6 +34,9 @@ msgstr "Verschillen tussen %s en %s"
 
 msgid "%1$s types are different: %2$s <-> %3$s"
 msgstr "%1$s types zijn verschillend: %2$s <-> %3$s"
+
+msgid "objects of type '%s' are not compared"
+msgstr "objecten van het type '%s' worden niet vergeleken"
 
 msgid "%1$s have different classes: %2$s <-> %3$s"
 msgstr "%1$s hebben verschlllende klassen: %2$s <-> %3$s"
@@ -41,8 +50,8 @@ msgstr "%1$s hebben verschillende namen: %2$s <-> %3$s"
 msgid "%1$s have different length: %2$d <-> %3$d"
 msgstr "%1$s hebben verschillende lengte: %2$d <-> %3$d"
 
-msgid "%1$s:%2$s differ: %3$s <-> %4$s"
-msgstr "%1$s:%2$s verschillen: %3$s <-> %4$s"
+msgid "%1$s[%2$s] differ: %3$s <-> %4$s"
+msgstr "%1$s[%2$s] verschillen: %3$s <-> %4$s"
 
 msgid "and"
 msgstr "en"
@@ -53,14 +62,14 @@ msgstr "of"
 msgid "file %s cannot be parsed"
 msgstr "Bestand %s kan niet geparseerd worden."
 
-msgid "no function definitions found."
-msgstr "Geen functiedefinities gevonden."
-
 msgid "This is"
 msgstr "Dit is"
 
 msgid "is a package with simple tools for package development."
 msgstr "is een pakket met simpele hulpmiddelen voor pakketontwikkeling."
+
+#~ msgid "no function definitions found."
+#~ msgstr "Geen functiedefinities gevonden."
 
 #~ msgid "NOTE"
 #~ msgstr "NOTA"
