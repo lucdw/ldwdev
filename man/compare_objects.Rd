@@ -4,7 +4,14 @@
 \alias{compare_objects}
 \title{Compare two R objects}
 \usage{
-compare_objects(object1, object2, outfile = "", ignore = NULL, max.diff = 30L)
+compare_objects(
+  object1,
+  object2,
+  outfile = "",
+  ignore = NULL,
+  max.diff = 30L,
+  warn = TRUE
+)
 }
 \arguments{
 \item{object1}{the first R object}
@@ -19,6 +26,9 @@ console, if FALSE output is returned, see Value.}
 list) to ignore in comparing}
 
 \item{max.diff}{maximum number of differences to show, default 30L}
+
+\item{warn}{show warnings about non supported types ('language' and
+'closure'? default = TRUE}
 }
 \value{
 number of differences reported or, if outfile FALSE,

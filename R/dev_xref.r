@@ -232,7 +232,7 @@ window.onload = function() {
 </script>
 </head>
 <body>
-  <h1>Xref functions in ", tostring(file, "and", "single"), ".</h1>\n",
+  <h1>Xref functions in ", h1xref(file), ".</h1>\n",
 "  <select id='selector' onchange='FromSelect()' title='Choose function'>",
         sep = "")
   for (functienaam in tmpnamen) {
@@ -245,4 +245,11 @@ window.onload = function() {
   </div></body>\n</html>\n")
   sink()
   browseURL(paste0(dest, "/index.html"))
+}
+h1xref <- function(file) {
+  if (length(file) == 1L) return(file)
+  file <- sort(file)
+  dirnames <- unique(sapply(file, dirname))
+  if (length(dirnames) == 1L) file <- substring(file, nchar(dirnames) + 2L)
+  tostring(file, "and", "single")
 }

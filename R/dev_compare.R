@@ -189,6 +189,8 @@ compare_files <- function(infile1, infile2,                       # nolint
 #' @param ignore regular expression(s) for name of slots or elements (of a
 #'               list) to ignore in comparing
 #' @param max.diff maximum number of differences to show, default 30L
+#' @param warn show warnings about non supported types ('language' and
+#' 'closure'? default = TRUE
 #'
 #' @return number of differences reported or, if outfile FALSE,
 #'  character vector with differences and attribute 'diff' the number of
@@ -214,7 +216,8 @@ compare_objects <- function(
     object2,
     outfile = "",
     ignore = NULL,
-    max.diff = 30L) {
+    max.diff = 30L,
+    warn = TRUE) {
   stopifnot(is.character(outfile) || inherits(outfile, "connection") ||
               identical(outfile, FALSE))
   stopifnot(is.numeric(max.diff) && as.integer(max.diff) > 0L)
@@ -224,7 +227,7 @@ compare_objects <- function(
   aantal <- 0
   my.env <- environment()
   where <- ""
-  compare_values(object1, object2, where, my.env, ignore)
+  compare_values(object1, object2, where, my.env, ignore, warn)
   if (identical(outfile, FALSE)) {
     attr(reportlines, "diff") <- aantal
     return(reportlines)
@@ -237,14 +240,13 @@ reportheader <- function(env) {
   string1 <- get("string1", env)
   string2 <- get("string2", env)
   hdr <- gettextf("Differences between %s and %s", string1, string2)
-  c(hdr, strrep("-", nchar(hdr)), "")
+  c(hdr, strrep("-", nchar(hdr)))
 }
-compare_values <- function(val1, val2, where, env, ignore) {
+compare_values <- function(val1, val2, where, env, ignore, warn) {
   if (identical(val1, val2)) return()
   differences <- get("aantal", env)
   lines <- get("reportlines", env)
   max.differences <- get("max.diff", env)
-  outfile <- get("outfile", env)
   class1 <- class(val1)
   class2 <- class(val2)
   if (typeof(val1) != typeof(val2)) {
@@ -257,7 +259,9 @@ compare_values <- function(val1, val2, where, env, ignore) {
     return() # no further examination if types are different
   }
   if (any(typeof(val1) == c("closure", "language"))) {
-    dev_warn(gettextf("objects of type '%s' are not compared", typeof(val1)))
+    if (warn) {
+      dev_warn(gettextf("objects of type '%s' are not compared", typeof(val1)))
+    }
     return()
   }
   if (!setequal(class1, class2)) {
@@ -273,7 +277,7 @@ compare_values <- function(val1, val2, where, env, ignore) {
     for (slot.name in slotNames(val1)) {
       if (any(sapply(ignore, function(re) grepl(re, slot.name)))) next
       compare_values(slot(val1, slot.name), slot(val2, slot.name),
-                     paste0(where, "@", slot.name), env, ignore)
+                     paste0(where, "@", slot.name), env, ignore, warn)
       aantalnu <- get("aantal", env)
       if (aantalnu >= max.differences) {
         lines <- c(lines,
