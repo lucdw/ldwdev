@@ -1,7 +1,7 @@
 Package: ldwdev
 Type: Package
 Title: Utilities for development R package
-Version: 0.1.5
+Version: 0.1.6
 Author: Luc De Wilde
 Maintainer: Luc De Wilde <Luc.DeWilde@uGent.be>
 Depends: R (>= 3.1.0), cyclocomp, methods
@@ -12,5 +12,5 @@ Encoding: UTF-8
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)

@@ -1,6 +1,6 @@
 #' Gets a cross-reference of variables used in top-level defined functions
 #'
-#' This function makes creates a cross-reference of the variabels for
+#' This function creates a cross-reference of the variables for
 #' all functions defined on the top-level in a .R-file.
 #'
 #' @param file a character vector naming the files to search in

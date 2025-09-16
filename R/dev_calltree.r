@@ -1,4 +1,17 @@
 #' @importFrom cyclocomp cyclocomp_package_dir
+#' @importFrom utils packageVersion
+get_hash <- function(x) {
+  p <- 257L
+  m <- 1000033L
+  hash_value <- 551017L
+  p_pow <- 1L
+  tmp <- as.integer(charToRaw(x))
+  for (j in tmp) {
+    hash_value <- (hash_value + (j + 1L) * p_pow) %% m
+    p_pow <- (p_pow * p) %% m
+  }
+  hash_value
+}
 get_call_info <- function(map) {
   stopifnot(is.character(map), length(map) == 1L)
   files <- dir(map, pattern = "\\.[rR]$")
@@ -198,10 +211,10 @@ calltree_html <- function(map, dest) {
   functienamen <- names(functies)
   synoniemnamen <- names(synoniemen)
   htmlnamen <- list()
-  for (i in seq_along(functienamen))
-    htmlnamen[[functienamen[i]]] <- paste0("f", i)
-  for (i in seq_along(synoniemnamen))
-    htmlnamen[[synoniemnamen[i]]] <- paste0("s", i)
+  for (nn in functienamen)
+    htmlnamen[[nn]] <- paste0("f", get_hash(nn))
+  for (nn in synoniemnamen)
+    htmlnamen[[nn]] <- paste0("s", get_hash(nn))
   alles <- sort(c(functienamen, synoniemnamen))
   for (i in seq_along(functienamen)) {
     f <- functienamen[i]
@@ -366,7 +379,8 @@ sink(paste0(dest, "/index.html"))
 cat("<!DOCTYPE html>
 <html>
 <head>
-<title>functions calltree</title>
+<title>", basename(map),
+" functions calltree</title>
 <style>
 h1 {
  color: #1e64C8;
@@ -389,8 +403,10 @@ tr:nth-child(even) {
 </style>
       </head>
       <body>
-      <h1>All functions in ",
-    map,
+      <h1>Functions in ",
+    basename(map), " version ",
+    as.character(packageVersion(basename(map))),  " - ",
+    as.character(Sys.Date()),
     ".</h1>\n<table>\n<tr><th>Name (*=exported)</th><th># calls</th>",
     "<th># called by</th><th>synonym of</th><th>defined in</th>",
     "<th>at line</th><th># lines</th><th>complexity</th></tr>\n", sep = "")

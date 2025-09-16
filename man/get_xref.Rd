@@ -18,7 +18,7 @@ list with for each top.level function a named list with:
 }
 }
 \description{
-This function makes creates a cross-reference of the variabels for
+This function creates a cross-reference of the variables for
 all functions defined on the top-level in a .R-file.
 }
 \examples{
