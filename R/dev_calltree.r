@@ -65,6 +65,25 @@ get_call_info <- function(map) {
   return(list(functies = functies, synoniemen = synoniemen,
               calls = listcalls, xrefs = xref))
 }
+indirect_xrefs <- function(xrefs) {
+  direct.xrefs <- lapply(xrefs, function(f) {
+    a <- unlist(strsplit(f, "|", TRUE))
+    unique(a)
+  })
+  add_xref <- function(x, curlist) {
+    dxx <- direct.xrefs[[x]]
+    if (length(dxx) == 0L || all(dxx == x)) return(curlist)
+    cl <- unique(c(curlist, dxx))
+    for (xx in setdiff(dxx, curlist)) cl <- add_xref(xx, cl)
+    unique(cl)
+  }
+  all.xrefs <- lapply(names(direct.xrefs), function(x) add_xref(x, x))
+  indirect.xrefs <- lapply(seq_along(xrefs), function(j) {
+    setdiff(all.xrefs[[j]], c(names(xrefs)[j], direct.xrefs[[j]]))
+    })
+  names(indirect.xrefs) <- names(xrefs)
+  indirect.xrefs
+}
 #' Create a call tree for a function in the r files of a package
 #'
 #' This function makes creates a call tree for a function
@@ -201,12 +220,19 @@ print.calltree <- summary.calltree <- function(x, ...) {
 #' @export
 calltree_html <- function(map, dest) {
   stopifnot(is.character(dest), length(dest) == 1L)
+  exports <- try(getNamespaceExports(basename(map)))
+  if (inherits(exports, "try-error")) exports <- basename(map)
+  namestar <-function(a) {
+    if (any(exports == a)) return(paste(a, "*"))
+    return(a)
+  }
   cyclo <- cyclocomp_package_dir(map)
   tmp <- get_call_info(map)
   functies <- tmp$functies
   synoniemen <- tmp$synoniemen
   listcalls <- tmp$calls
   xref <- tmp$xrefs
+  indirect.xrefs <- indirect_xrefs(tmp$xrefs)
   if (!dir.exists(dest)) dir.create(dest)
   functienamen <- names(functies)
   synoniemnamen <- names(synoniemen)
@@ -226,7 +252,6 @@ calltree_html <- function(map, dest) {
 <title>",
     basename(map), " ", f,
 "</title>
-</head>
 <style>
 h1 {
  color: #1e64c8;
@@ -239,17 +264,18 @@ p.lijst:nth-child(even) {
   background-color: #dddddd;
 }
 div.mycontainer {
-  width:95%;
+  width:99%;
   overflow:auto;
 }
 div.mycontainer div {
-  width:45%;
+  width:31%;
   float:left;
   border-style: solid;
   border-width: 5px;
   margin: 4px;
 }
 </style>
+</head>
 <body>
 <h1>",
 f,
@@ -265,14 +291,14 @@ functies[[f]]$src,
     if (length(funccall) > 0L) {
       for (j in seq_along(funccall)) {
         cat("<p class='lijst'><a href='", htmlnamen[[funccall[j]]], ".html'>",
-            funccall[j], "</a></p>\n", sep = "")
+            namestar(funccall[j]), "</a></p>\n", sep = "")
       }
     } else {
       cat("none")
     }
     cat("</div>
   <div style=\"border-color:#1e64c8;\">
-  <h2>Called by functions</h2>
+  <h2>Called by</h2>
   ")
     if (is.null(xref[[f]])) {
       cat("none")
@@ -288,8 +314,21 @@ functies[[f]]$src,
               sep = "")
         } else {
           cat("<p class='lijst'><a href='", htmlnamen[[caller]], ".html'>",
-              caller, "</a></p>\n", sep = "")
+              namestar(caller), "</a></p>\n", sep = "")
         }
+      }
+    }
+    cat("</div>
+  <div style=\"border-color:#3e9458;\">
+  <h2>Called indirectly by</h2>
+  ")
+    if (is.null(indirect.xrefs[[f]]) || length(indirect.xrefs[[f]]) == 0L) {
+      cat("none")
+    } else {
+      for (j in seq_along(indirect.xrefs[[f]])) {
+        caller <- indirect.xrefs[[f]][j]
+        cat("<p class='lijst'><a href='", htmlnamen[[caller]], ".html'>",
+              namestar(caller), "</a></p>\n", sep = "")
       }
     }
     cat("</div>
@@ -320,11 +359,11 @@ p.lijst:nth-child(even) {
   background-color: #dddddd;
 }
 div.mycontainer {
-  width:95%;
+  width:99%;
   overflow:auto;
 }
 div.mycontainer div {
-  width:45%;
+  width:31%;
   float:left;
   border-style: solid;
   border-width: 5px;
@@ -344,27 +383,40 @@ div.mycontainer div {
       synoniemen[[f]]$name, "</a></p>\n", sep = "")
   cat("</p><div class=\"mycontainer\">
   <div style=\"border-color:#ffd200;\">
-  <h2>Functions called (copied from ", synoniemen[[f]]$name, ")</h2>
+  <h2>Functions called", synoniemen[[f]]$name, "</h2>
   ")
   if (length(funccall) > 0L) {
     for (j in seq_along(funccall)) {
       cat("<p class='lijst'><a href='", htmlnamen[[funccall[j]]], ".html'>",
-          funccall[j], "</a></p>\n", sep = "")
+          namestar(funccall[j]), "</a></p>\n", sep = "")
     }
   } else {
     cat("none")
   }
   cat("</div>
   <div style=\"border-color:#1e64c8;\">
-  <h2>Called by functions</h2>
+  <h2>Called by</h2>
   ")
   if (is.null(xref[[f]])) {
     cat("none")
   } else {
     for (j in seq_along(xref[[f]])) {
       caller <- xref[[f]][j]
-      cat("<p class='lijst'><a href='", htmlnamen[[caller]], ".html'>", caller,
-          "</a></p>\n", sep = "")
+      cat("<p class='lijst'><a href='", htmlnamen[[caller]], ".html'>",
+          namestar(caller), "</a></p>\n", sep = "")
+    }
+  }
+  cat("</div>
+  <div style=\"border-color:#3e9458;\">
+  <h2>Called indirectly by</h2>
+  ")
+  if (is.null(indirect.xrefs[[f]]) || length(indirect.xrefs[[f]]) == 0L) {
+    cat("none")
+  } else {
+    for (j in seq_along(indirect.xrefs[[f]])) {
+      caller <- indirect.xrefs[[f]][j]
+      cat("<p class='lijst'><a href='", htmlnamen[[caller]], ".html'>",
+          namestar(caller), "</a></p>\n", sep = "")
     }
   }
   cat("</div>
@@ -373,8 +425,6 @@ div.mycontainer div {
   sink()
 }
 ################## write index.html #######################
-exports <- try(getNamespaceExports(basename(map)))
-if (inherits(exports, "try-error")) exports <- basename(map)
 sink(paste0(dest, "/index.html"))
 cat("<!DOCTYPE html>
 <html>
@@ -413,8 +463,7 @@ tr:nth-child(even) {
 for (i in seq_along(alles)) {
   cat("<tr><td><a href=\"", htmlnamen[[alles[i]]],
       ".html\", target=\"_blank\">",
-      alles[i], sep = "")
-  if (any(exports == alles[i])) cat(" *")
+      namestar(alles[i]), sep = "")
   cat("</a></td><td>", length(listcalls[[alles[i]]]),
       "</td><td>",
       length(xref[[alles[i]]]), "</td><td>", sep = "")
