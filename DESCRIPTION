@@ -1,7 +1,7 @@
 Package: ldwdev
 Type: Package
 Title: Utilities for development R package
-Version: 0.1.6
+Version: 0.1.7
 Author: Luc De Wilde
 Maintainer: Luc De Wilde <Luc.DeWilde@uGent.be>
 Depends: R (>= 3.1.0), cyclocomp, methods

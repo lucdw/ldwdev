@@ -27,7 +27,9 @@ in the r files of a package.
 The function determines the functions in the package by
 looking at the top-level assignments in the R files. Only
 LEFT_ASSIGN \code{'<-'} symbols are looked at. Function calls
-via \code{do.call} or function definitions
+via \code{do.call} are recognized if the first parameter of the call
+is positional and a symbol or a string constant (the function name).
+Functions called via \code{eval} or function definitions
 via \code{setMethod} are ignored!
 }
 \examples{

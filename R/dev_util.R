@@ -91,5 +91,16 @@ get_function_calls <- function(parseddata, range) {
   fcrows <- which(parseddata$token == "SYMBOL_FUNCTION_CALL" &
                     10000L * parseddata$line1 + parseddata$col1 >= frompos &
                     10000L * parseddata$line2 + parseddata$col2 <= topos)
-  sort(unique(parseddata$text[fcrows]))
+  docalls <- which(parseddata$token == "SYMBOL_FUNCTION_CALL" &
+                     10000L * parseddata$line1 + parseddata$col1 >= frompos &
+                     10000L * parseddata$line2 + parseddata$col2 <= topos &
+                     parseddata$text == "do.call")
+  docallfuncs <- character(0)
+  for (j in docalls) {
+    if (parseddata$token[j + 3] == "SYMBOL" ||
+        parseddata$token[j + 3] == "STR_CONST") {
+      docallfuncs <- c(docallfuncs, parseddata$text[j + 3])
+    }
+  }
+  sort(unique(c(docallfuncs, parseddata$text[fcrows])))
 }

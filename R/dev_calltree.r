@@ -93,7 +93,9 @@ indirect_xrefs <- function(xrefs) {
 #' The function determines the functions in the package by
 #' looking at the top-level assignments in the R files. Only
 #' LEFT_ASSIGN \code{'<-'} symbols are looked at. Function calls
-#' via \code{do.call} or function definitions
+#' via \code{do.call} are recognized if the first parameter of the call
+#' is positional and a symbol or a string constant (the function name).
+#' Functions called via \code{eval} or function definitions
 #' via \code{setMethod} are ignored!
 #'
 #' @param map a character item naming the directory of the package
@@ -201,8 +203,10 @@ print.calltree <- summary.calltree <- function(x, ...) {
 #' The function determines the functions in the package by
 #' looking at the top-level assignments in the R files. Only
 #'  LEFT_ASSIGN \code{'<-'} symbols are looked at. Function calls
-#' via \code{do.call} or function definitions via \code{setMethod}
-#' are ignored!
+#' via \code{do.call} are recognized if the first parameter of the call
+#' is positional and a symbol or a string constant (the function name).
+#' Functions called via \code{eval} or function definitions
+#' via \code{setMethod} are ignored!
 #'
 #' @param map the directory of the package
 #' @param dest the directory where the html files should be written
