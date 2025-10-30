@@ -226,6 +226,15 @@ calltree_html <- function(map, dest) {
   stopifnot(is.character(dest), length(dest) == 1L)
   exports <- try(getNamespaceExports(basename(map)))
   if (inherits(exports, "try-error")) exports <- basename(map)
+  xxx <- readLines(paste0(map, "/NAMESPACE"))
+  s3 <- grep("^S3method\\(.*, .*\\) *$", xxx, value = TRUE)
+  if (length(s3) > 0) {
+    s3 <- gsub("(", "\"", s3, fixed = TRUE)
+    s3 <- gsub(")", "\")", s3, fixed = TRUE)
+    s3 <- gsub(", *", ".", s3)
+    s3 <- gsub("^S3method", "exports <- c(exports,", s3)
+    eval(str2expression(s3))
+  }
   namestar <-function(a) {
     if (any(exports == a)) return(paste(a, "*"))
     return(a)
