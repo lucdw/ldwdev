@@ -470,9 +470,19 @@ tr:nth-child(even) {
     basename(map), " version ",
     as.character(packageVersion(basename(map))),  " - ",
     as.character(Sys.Date()),
-    ".</h1>\n<table>\n<tr><th>Name (*=exported)</th><th># calls</th>",
-    "<th># called by</th><th>synonym of</th><th>defined in</th>",
-    "<th>at line</th><th># lines</th><th>complexity</th></tr>\n", sep = "")
+    ".</h1><p>Click on a column header to sort on that column.
+    <span id='sorting' style='background-color: green; visibility: hidden;'>
+    s o r t i n g</span></p>
+\n<table id='myTable'>\n<tr>
+<th onclick='sortTable(0)'>Name (*=exported)</th>
+<th onclick='sortTable(1)'># calls</th>,
+<th onclick='sortTable(2)'># called by</th>
+<th onclick='sortTable(3)'>synonym of</th>
+<th onclick='sortTable(4)'>defined in</th>
+<th onclick='sortTable(5)'>at line</th>
+<th onclick='sortTable(6)'># lines</th>
+<th onclick='sortTable(7)'>complexity</th>
+</tr>\n", sep = "")
 for (i in seq_along(alles)) {
   cat("<tr><td><a href=\"", htmlnamen[[alles[i]]],
       ".html\", target=\"_blank\">",
@@ -494,7 +504,100 @@ for (i in seq_along(alles)) {
   }
   cat("</td></tr>\n")
 }
-cat("</table></body>\n</html>\n")
+cat("</table>\n")
+cat("
+<script>
+oncolumn = 0;
+columnIndex = 0;
+function sortTable(column = 0) {
+  document.getElementById('sorting').style.visibility='visible';
+  oncolumn = column;
+  columnIndex = column;
+  window.setTimeout(sortTable2, 250);
+}
+lastsort = -1;
+lastasc = false;
+function sortTable2() {
+   const table = document.getElementById('myTable');
+   const rows = Array.from(table.rows).slice(1); // Exclude header row
+   ascending = true;
+   if (lastsort == columnIndex) ascending = !lastasc;
+   rows.sort((a, b) => {
+       const cellA = a.cells[columnIndex].innerText.toLowerCase();
+       const cellB = b.cells[columnIndex].innerText.toLowerCase();
+       cellAnum = Number(cellA)
+       cellBnum = Number(cellB)
+       if (Number.isNaN(cellAnum) || Number.isNaN(cellBnum)) {
+          if (cellA < cellB) return ascending ? -1 : 1;
+          if (cellA > cellB) return ascending ? 1 : -1;
+          return 0;
+       } else {
+          if (cellAnum < cellBnum) return ascending ? -1 : 1;
+          if (cellAnum > cellBnum) return ascending ? 1 : -1;
+          return 0;
+       }
+   });
+   rows.forEach(row => table.appendChild(row)); // Reorder rows
+   lastsort = columnIndex;
+   lastasc = ascending;
+  document.getElementById('sorting').style.visibility='hidden';
+}
+function sortTableNow() {
+  var table, rows, switching, i, x, y, shouldSwitch;
+  asc = true;
+  if (lastsort == oncolumn) asc = !lastasc;
+  table = document.getElementById(\"myTable\");
+  switching = true;
+  /*Make a loop that will continue until
+  no switching has been done:*/
+  while (switching) {
+    //start by saying: no switching is done:
+    switching = false;
+    rows = table.rows;
+    /*Loop through all table rows (except the
+    first, which contains table headers):*/
+    for (i = 1; i < (rows.length - 1); i++) {
+      //start by saying there should be no switching:
+      shouldSwitch = false;
+      /*Get the two elements you want to compare,
+      one from current row and one from the next:*/
+      x = rows[i].getElementsByTagName(\"TD\")[oncolumn];
+      y = rows[i + 1].getElementsByTagName(\"TD\")[oncolumn];
+      xnum = Number(x.innerHTML)
+      ynum = Number(y.innerHTML)
+      //check if the two rows should switch place:
+      if (Number.isNaN(xnum) || Number.isNaN(ynum)) {
+        text = x.innerHTML.toLowerCase()
+        x = text.replace(/href=.*html\"/, '?')
+        text = y.innerHTML.toLowerCase()
+        y = text.replace(/href=.*html\"/, '?')
+        if (asc) {
+          shouldSwitch = (x > y)
+        } else {
+          shouldSwitch = (x < y)
+        }
+      } else {
+        if (asc) {
+          shouldSwitch = (xnum > ynum)
+        } else {
+          shouldSwitch = (xnum < ynum)
+        }
+      }
+      if (shouldSwitch) {
+        /*If a switch has been marked, make the switch
+        and mark that a switch has been done:*/
+        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+        switching = true;
+      }
+    }
+  }
+  lastsort = oncolumn;
+  lastasc = asc;
+  document.getElementById('sorting').style.visibility='hidden';
+}
+</script>
+    ")
+cat("</body>\n</html>\n")
 sink()
 browseURL(paste0(dest, "/index.html"))
 }
