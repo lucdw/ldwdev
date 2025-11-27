@@ -227,12 +227,12 @@ calltree_html <- function(map, dest) {
   exports <- try(getNamespaceExports(basename(map)))
   if (inherits(exports, "try-error")) exports <- basename(map)
   xxx <- readLines(paste0(map, "/NAMESPACE"))
-  s3 <- grep("^S3method\\(.*, .*\\) *$", xxx, value = TRUE)
+  s3 <- grep("^ *S3method\\(.*, .*\\) *$", xxx, value = TRUE)
   if (length(s3) > 0) {
-    s3 <- gsub("(", "\"", s3, fixed = TRUE)
-    s3 <- gsub(")", "\")", s3, fixed = TRUE)
-    s3 <- gsub(", *", ".", s3)
-    s3 <- gsub("^S3method", "exports <- c(exports,", s3)
+    s3 <- gsub("^ *S3m.*\\(.*,.*, *(.*)\\)",
+               "exports <- c(exports, \"\\1\")", s3)
+    s3 <- gsub("^ *S3m.*\\(([^,]*), *([^)]*)\\).*$",
+               "exports <- c(exports, \"\\1.\\2\")", s3)
     eval(str2expression(s3))
   }
   namestar <-function(a) {
@@ -507,11 +507,9 @@ for (i in seq_along(alles)) {
 cat("</table>\n")
 cat("
 <script>
-oncolumn = 0;
 columnIndex = 0;
 function sortTable(column = 0) {
   document.getElementById('sorting').style.visibility='visible';
-  oncolumn = column;
   columnIndex = column;
   window.setTimeout(sortTable2, 250);
 }
@@ -540,59 +538,6 @@ function sortTable2() {
    rows.forEach(row => table.appendChild(row)); // Reorder rows
    lastsort = columnIndex;
    lastasc = ascending;
-  document.getElementById('sorting').style.visibility='hidden';
-}
-function sortTableNow() {
-  var table, rows, switching, i, x, y, shouldSwitch;
-  asc = true;
-  if (lastsort == oncolumn) asc = !lastasc;
-  table = document.getElementById(\"myTable\");
-  switching = true;
-  /*Make a loop that will continue until
-  no switching has been done:*/
-  while (switching) {
-    //start by saying: no switching is done:
-    switching = false;
-    rows = table.rows;
-    /*Loop through all table rows (except the
-    first, which contains table headers):*/
-    for (i = 1; i < (rows.length - 1); i++) {
-      //start by saying there should be no switching:
-      shouldSwitch = false;
-      /*Get the two elements you want to compare,
-      one from current row and one from the next:*/
-      x = rows[i].getElementsByTagName(\"TD\")[oncolumn];
-      y = rows[i + 1].getElementsByTagName(\"TD\")[oncolumn];
-      xnum = Number(x.innerHTML)
-      ynum = Number(y.innerHTML)
-      //check if the two rows should switch place:
-      if (Number.isNaN(xnum) || Number.isNaN(ynum)) {
-        text = x.innerHTML.toLowerCase()
-        x = text.replace(/href=.*html\"/, '?')
-        text = y.innerHTML.toLowerCase()
-        y = text.replace(/href=.*html\"/, '?')
-        if (asc) {
-          shouldSwitch = (x > y)
-        } else {
-          shouldSwitch = (x < y)
-        }
-      } else {
-        if (asc) {
-          shouldSwitch = (xnum > ynum)
-        } else {
-          shouldSwitch = (xnum < ynum)
-        }
-      }
-      if (shouldSwitch) {
-        /*If a switch has been marked, make the switch
-        and mark that a switch has been done:*/
-        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-        switching = true;
-      }
-    }
-  }
-  lastsort = oncolumn;
-  lastasc = asc;
   document.getElementById('sorting').style.visibility='hidden';
 }
 </script>
