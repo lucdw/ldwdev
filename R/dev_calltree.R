@@ -313,7 +313,7 @@ calltree_html <- function(map, dest) {
       name             = f,
       defined_in       = functies[[f]]$src,
       defined_at_lines = c(functies[[f]]$def1[1], functies[[f]]$def2[3] + 1L - functies[[f]]$def2[1]),
-      exported         = FALSE,
+      exported         = any(exports == f),
       calls            = listcalls[[f]],
       called_by        = xref[[f]],
       synonym_of       = character(0L),
@@ -455,12 +455,14 @@ div.mycontainer div {
   }
   for (i in seq_along(synoniemnamen)) {
     f <- synoniemnamen[i]
+    funccall <- listcalls[[synoniemen[[f]]$name]]
+    if (is.null(funccall)) funccall <- character(0)
     devfunc <- new("dev_func",
       name             = f,
       defined_in       = synoniemen[[f]]$src,
       defined_at_lines = c(synoniemen[[f]]$def1[1], 1L),
-      exported         = FALSE,
-      calls            = listcalls[[synoniemen[[f]]$name]],
+      exported         = any(exports == f),
+      calls            = funccall,
       called_by        = xref[[f]],
       synonym_of       = synoniemen[[f]]$name,
       complexity       = cycval
@@ -469,7 +471,6 @@ div.mycontainer div {
     names(rval1) <- f
     return_value <- c(return_value, rval1)
     if (!html) next
-    funccall <- listcalls[[synoniemen[[f]]$name]]
     sink(paste0(dest, "/", htmlnamen[[f]], ".html"))
     cat(
       "<!DOCTYPE html>
