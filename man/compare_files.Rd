@@ -8,8 +8,8 @@ compare_files(
   infile1,
   infile2,
   outfile = paste0(dirname(infile1), "/", basename(infile1), basename(infile2), ".diff"),
-  remove.lines = NULL,
-  equal.lines = 2L
+  remove_lines = NULL,
+  equal_lines = 2L
 )
 }
 \arguments{
@@ -22,10 +22,10 @@ with the path to the second file}
 \item{outfile}{a connection or a character vector of length 1
 with the path to the output file}
 
-\item{remove.lines}{NULL or a character vector with strings
+\item{remove_lines}{NULL or a character vector with strings
 identifying lines which should be excluded from comparison}
 
-\item{equal.lines}{integer value > 1L, for number of
+\item{equal_lines}{integer value > 1L, for number of
 lines to be a match, default is 2L}
 }
 \value{
@@ -45,7 +45,7 @@ writeLines(c("0", "1", "a", "b", "c", "e", "f", "grrr", "h", "i", "j"),
 compare_files(filenames[1], filenames[2], outfil, "rr")
 cat(readLines(outfil), sep="\n")
 
-compare_files(filenames[1], filenames[2], outfil, equal.lines = 3L)
+compare_files(filenames[1], filenames[2], outfil, equal_lines = 3L)
 cat(readLines(outfil), sep="\n")
 close(outfil)
 unlink(filenames)

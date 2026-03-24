@@ -29,9 +29,10 @@
 #' @rdname tostring
 #' @export
 tostring <- function(
-    x,
-    sep = c("array", "none", "and", "or"),
-    quote = c("double", "single", "none")) {
+  x,
+  sep = c("array", "none", "and", "or"),
+  quote = c("double", "single", "none")
+) {
   if (missing(x)) {
     return("NULL")
   }
@@ -42,23 +43,43 @@ tostring <- function(
     xx <- sapply(x, function(el) tostring(el, "array", quote))
   } else {
     if (is.character(x)) {
-      xx <- switch(quote,
-                   double = dQuote(x, q = FALSE),
-                   single = sQuote(x, q = FALSE),
-                   none = x)
+      xx <- switch(
+        quote,
+        double = dQuote(x, q = FALSE),
+        single = sQuote(x, q = FALSE),
+        none = x
+      )
     } else {
       xx <- as.character(x)
     }
     xx[is.na(x)] <- "NA"
   }
-  if (!is.null(xn)) xx <- paste0(xn, ":", xx)
+  if (!is.null(xn)) {
+    xx <- paste0(xn, ":", xx)
+  }
   if (length(xx) == 1) {
     rv <- xx
   } else {
-    if (sep == "array") rv <- paste0("(", paste(xx, collapse = ", "), ")")
-    if (sep == "none") rv <- paste(xx, collapse = ", ")
-    if (sep == "and") rv <- paste(paste(xx[-length(xx)], collapse = ", "), gettext("and"), xx[length(xx)])
-    if (sep == "or") rv <- paste(paste(xx[-length(xx)], collapse = ", "), gettext("or"), xx[length(xx)])
+    if (sep == "array") {
+      rv <- paste0("(", paste(xx, collapse = ", "), ")")
+    }
+    if (sep == "none") {
+      rv <- paste(xx, collapse = ", ")
+    }
+    if (sep == "and") {
+      rv <- paste(
+        paste(xx[-length(xx)], collapse = ", "),
+        gettext("and"),
+        xx[length(xx)]
+      )
+    }
+    if (sep == "or") {
+      rv <- paste(
+        paste(xx[-length(xx)], collapse = ", "),
+        gettext("or"),
+        xx[length(xx)]
+      )
+    }
   }
   rv
 }

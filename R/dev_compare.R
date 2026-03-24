@@ -16,12 +16,26 @@ ldw_lines_to_text <- function(welke) {
     }
   }
   if (welke[1] <= welke[2] && welke[3] <= welke[4]) {
-    return(c(welke12, "c", welke34))
+    c(welke12, "c", welke34)
   } else if (welke[1] > welke[2]) {
-    return(c(welke12, "a", welke34))
+    c(welke12, "a", welke34)
   } else {
-    return(c(welke12, "d", welke34))
+    c(welke12, "d", welke34)
   }
+}
+read_infile <- function(infile) {
+  stopifnot(is.character(infile) || inherits(infile, "connection"))
+    if (is.character(infile) && !file.exists(infile)) {
+    dev_stop(gettextf("%s file not found!", infile))
+  }
+  suppressWarnings(lines <- readLines(infile))
+  if (length(lines) == 0L) {
+    dev_stop(gettextf("infile %s empty!", infile))
+  }
+  if (!is.character(infile) && isOpen(infile, "r")) {
+    close(infile)
+  }
+  lines
 }
 #' Compare two text files
 #'
@@ -34,9 +48,9 @@ ldw_lines_to_text <- function(welke) {
 #'                with the path to the second file
 #' @param outfile a connection or a character vector of length 1
 #'                with the path to the output file
-#' @param remove.lines NULL or a character vector with strings
+#' @param remove_lines NULL or a character vector with strings
 #'                identifying lines which should be excluded from comparison
-#' @param equal.lines integer value > 1L, for number of
+#' @param equal_lines integer value > 1L, for number of
 #'                    lines to be a match, default is 2L
 #'
 #' @return number of differences found
@@ -51,7 +65,7 @@ ldw_lines_to_text <- function(welke) {
 #' compare_files(filenames[1], filenames[2], outfil, "rr")
 #' cat(readLines(outfil), sep="\n")
 #'
-#' compare_files(filenames[1], filenames[2], outfil, equal.lines = 3L)
+#' compare_files(filenames[1], filenames[2], outfil, equal_lines = 3L)
 #' cat(readLines(outfil), sep="\n")
 #' close(outfil)
 #' unlink(filenames)
@@ -60,40 +74,35 @@ ldw_lines_to_text <- function(welke) {
 #' @name compare_files
 #' @rdname compare_files
 #' @export
-compare_files <- function(infile1, infile2,                       # nolint
-                          outfile = paste0(dirname(infile1), "/",
-                                           basename(infile1),
-                                           basename(infile2), ".diff"),
-                          remove.lines = NULL,
-                          equal.lines = 2L) {
-  stopifnot(is.character(infile1) || inherits(infile1, "connection"))
-  stopifnot(is.character(infile2) || inherits(infile2, "connection"))
+compare_files <- function(
+  infile1,
+  infile2, # nolint
+  outfile = paste0(
+    dirname(infile1),
+    "/",
+    basename(infile1),
+    basename(infile2),
+    ".diff"
+  ),
+  remove_lines = NULL,
+  equal_lines = 2L
+) {
   stopifnot(is.character(outfile) || inherits(outfile, "connection"))
-  stopifnot(is.null(remove.lines) || is.character(remove.lines))
-  equal.lines <- as.integer(equal.lines)
-  if (equal.lines < 2L) {
-    dev_stop(gettext("equal.lines must be at least 2"))
+  stopifnot(is.null(remove_lines) || is.character(remove_lines))
+  equal_lines <- as.integer(equal_lines)
+  if (equal_lines < 2L) {
+    dev_stop(gettext("equal_lines must be at least 2"))
   }
-  if (is.character(infile1) && !file.exists(infile1)) {
-    dev_stop(gettextf("%s file not found!", infile1))
-  }
-  suppressWarnings(lines1 <- readLines(infile1))
-  if (length(lines1) == 0L) dev_stop(gettext("infile1 empty"))
-  if (!is.character(infile1) && isOpen(infile1, "r")) close(infile1)
-  if (!is.null(remove.lines)) {
-    for (rml in remove.lines) {
+  lines1 <- read_infile(infile1)
+  if (!is.null(remove_lines)) {
+    for (rml in remove_lines) {
       toremove <- grepl(rml, lines1, fixed = TRUE)
       lines1 <- lines1[!toremove]
     }
   }
-  if (is.character(infile2) && !file.exists(infile2)) {
-    dev_stop(gettextf("%s file not found!", infile2))
-  }
-  suppressWarnings(lines2 <- readLines(infile2))
-  if (length(lines2) == 0L) dev_stop(gettext("infile2 empty"))
-  if (!is.character(infile2) && isOpen(infile2, "r")) close(infile2)
-  if (!is.null(remove.lines)) {
-    for (rml in remove.lines) {
+  lines2 <- read_infile(infile2)
+  if (!is.null(remove_lines)) {
+    for (rml in remove_lines) {
       toremove <- grepl(rml, lines2, fixed = TRUE)
       lines2 <- lines2[!toremove]
     }
@@ -125,27 +134,40 @@ compare_files <- function(infile1, infile2,                       # nolint
       for (j in which(m > 0L)) {
         pos1 <- i1 + j - 1L
         pos2 <- i2 + m[j] - 1L
-        tot1 <- min(pos1 + equal.lines - 2L, length(lines1))
-        tot2 <- min(pos2 + equal.lines - 2L, length(lines2))
+        tot1 <- min(pos1 + equal_lines - 2L, length(lines1))
+        tot2 <- min(pos2 + equal_lines - 2L, length(lines2))
         if (all(lines1[seq.int(pos1, tot1)] == lines2[seq.int(pos2, tot2)])) {
           if (j > 1L || m[j] > 1L) {
             welke[2L] <- i1 + j - 2L
             welke[4L] <- i2 + m[j] - 2L
             txtje <- ldw_lines_to_text(welke)
             cat(paste(txtje, collapse = ""), "\n", sep = "", file = oc)
-            if (j > 1L)
-              cat(paste0("< ", lines1[seq.int(i1, i1 + j - 2L)], "\n"),
-                            sep = "", file = oc)
-            if (txtje[2L] == "c") cat("---\n", file = oc)
-            if (m[j] > 1L)
-              cat(paste0("> ", lines2[seq.int(i2, i2 + m[j] - 2L)], "\n"),
-                               sep = "", file = oc)
+            if (j > 1L) {
+              cat(
+                paste0("< ", lines1[seq.int(i1, i1 + j - 2L)], "\n"),
+                sep = "",
+                file = oc
+              )
+            }
+            if (txtje[2L] == "c") {
+              cat("---\n", file = oc)
+            }
+            if (m[j] > 1L) {
+              cat(
+                paste0("> ", lines2[seq.int(i2, i2 + m[j] - 2L)], "\n"),
+                sep = "",
+                file = oc
+              )
+            }
             aantal <- aantal + 1L
           }
           jj1 <- j + 1L
           jj2 <- m[j] + 1L
-          while (i1 + jj1 <= length(lines1) && i2 + jj2 <= length(lines2) &&
-                 lines1[i1 + jj1] == lines2[i2 + jj2]) {
+          while (
+            i1 + jj1 <= length(lines1) &&
+              i2 + jj2 <= length(lines2) &&
+              lines1[i1 + jj1] == lines2[i2 + jj2]
+          ) {
             jj1 <- jj1 + 1L
             jj2 <- jj2 + 1L
           }
@@ -159,11 +181,15 @@ compare_files <- function(infile1, infile2,                       # nolint
         if (i1 + window >= length(lines1) && i2 + window >= length(lines2)) {
           txtje <- ldw_lines_to_text(welke)
           cat(paste(txtje, collapse = ""), "\n", sep = "", file = oc)
-          if (length(welke1) > 0L) cat(paste0("< ", lines1[welke1], "\n"),
-                                       sep = "", file = oc)
-          if (txtje[2L] == "c") cat("---\n", file = oc)
-          if (length(welke2) > 0L) cat(paste0("> ", lines2[welke2], "\n"),
-                                       sep = "", file = oc)
+          if (length(welke1) > 0L) {
+            cat(paste0("< ", lines1[welke1], "\n"), sep = "", file = oc)
+          }
+          if (txtje[2L] == "c") {
+            cat("---\n", file = oc)
+          }
+          if (length(welke2) > 0L) {
+            cat(paste0("> ", lines2[welke2], "\n"), sep = "", file = oc)
+          }
           i1 <- length(lines1) + 1L
           i2 <- length(lines2) + 1L
           aantal <- aantal + 1L
@@ -173,8 +199,10 @@ compare_files <- function(infile1, infile2,                       # nolint
       }
     }
   }
-  if (is.character(outfile)) close(oc)
-  return(aantal)
+  if (is.character(outfile)) {
+    close(oc)
+  }
+  aantal
 }
 #' Compare two R objects
 #'
@@ -212,28 +240,34 @@ compare_files <- function(infile1, infile2,                       # nolint
 #' @rdname compare_objects
 #' @export
 compare_objects <- function(
-    object1,
-    object2,
-    outfile = "",
-    ignore = NULL,
-    max.diff = 30L,
-    warn = TRUE) {
-  stopifnot(is.character(outfile) || inherits(outfile, "connection") ||
-              identical(outfile, FALSE))
+  object1,
+  object2,
+  outfile = "",
+  ignore = NULL,
+  max.diff = 30L,
+  warn = TRUE
+) {
+  stopifnot(
+    is.character(outfile) ||
+      inherits(outfile, "connection") ||
+      identical(outfile, FALSE)
+  )
   stopifnot(is.numeric(max.diff) && as.integer(max.diff) > 0L)
   string1 <- deparse1(substitute(object1))
   string2 <- deparse1(substitute(object2))
   reportlines <- character(0)
   aantal <- 0
-  my.env <- environment()
+  my_env <- environment()
+  assign("string1", string1, my_env)
+  assign("string2", string2, my_env)
   where <- ""
-  compare_values(object1, object2, where, my.env, ignore, warn)
+  compare_values(object1, object2, where, my_env, ignore, warn)
   if (identical(outfile, FALSE)) {
     attr(reportlines, "diff") <- aantal
-    return(reportlines)
+    reportlines
   } else {
-    cat(c(reportheader(my.env), reportlines), file = outfile, sep = "\n")
-    return(aantal)
+    cat(c(reportheader(my_env), reportlines), file = outfile, sep = "\n")
+    aantal
   }
 }
 reportheader <- function(env) {
@@ -243,16 +277,24 @@ reportheader <- function(env) {
   c(hdr, strrep("-", nchar(hdr)))
 }
 compare_values <- function(val1, val2, where, env, ignore, warn) {
-  if (identical(val1, val2)) return()
+  if (identical(val1, val2)) {
+    return()
+  }
   differences <- get("aantal", env)
   lines <- get("reportlines", env)
   max.differences <- get("max.diff", env)
   class1 <- class(val1)
   class2 <- class(val2)
   if (typeof(val1) != typeof(val2)) {
-    lines <- c(lines,
-               gettextf("%1$s types are different: %2$s <-> %3$s",
-               where, typeof(val1), typeof(val2)))
+    lines <- c(
+      lines,
+      gettextf(
+        "%1$s types are different: %2$s <-> %3$s",
+        where,
+        typeof(val1),
+        typeof(val2)
+      )
+    )
     differences <- differences + 1L
     assign("aantal", differences, env)
     assign("reportlines", lines, env)
@@ -265,77 +307,122 @@ compare_values <- function(val1, val2, where, env, ignore, warn) {
     return()
   }
   if (!setequal(class1, class2)) {
-    if (differences == 0) reportheader(env)
-    lines <- c(lines,
-               gettextf("%1$s have different classes: %2$s <-> %3$s",
-               where, tostring(class1), tostring(class2)))
+    if (differences == 0) {
+      reportheader(env)
+    }
+    lines <- c(
+      lines,
+      gettextf(
+        "%1$s have different classes: %2$s <-> %3$s",
+        where,
+        tostring(class1),
+        tostring(class2)
+      )
+    )
     assign("aantal", differences + 1L, env)
     assign("reportlines", lines, env)
     return() # no further examination if classes different
   }
-  if (isS4(val1)) { # handle slots of S4 classes
+  if (isS4(val1)) {
+    # handle slots of S4 classes
     for (slot.name in slotNames(val1)) {
-      if (any(sapply(ignore, function(re) grepl(re, slot.name)))) next
-      compare_values(slot(val1, slot.name), slot(val2, slot.name),
-                     paste0(where, "@", slot.name), env, ignore, warn)
+      if (any(sapply(ignore, function(re) grepl(re, slot.name)))) {
+        next
+      }
+      compare_values(
+        slot(val1, slot.name),
+        slot(val2, slot.name),
+        paste0(where, "@", slot.name),
+        env,
+        ignore,
+        warn
+      )
       aantalnu <- get("aantal", env)
       if (aantalnu >= max.differences) {
-        lines <- c(lines,
-                   gettext("Maximum number of differences reached!"))
+        lines <- c(lines, gettext("Maximum number of differences reached!"))
         assign("reportlines", lines, env)
         break
       }
     }
     return()
   }
-  if (is.list(val1)) { # handle elements of lists
-    for (elem.name in names(val1)) {
-      if (any(sapply(ignore, function(re) grepl(re, elem.name)))) next
-      compare_values(val1[[elem.name]], val2[[elem.name]],
-                     paste0(where, "$", elem.name), env, ignore)
+  if (is.list(val1)) {
+    # handle elements of lists
+    for (elem_name in names(val1)) {
+      if (any(sapply(ignore, function(re) grepl(re, elem_name)))) {
+        next
+      }
+      compare_values(
+        val1[[elem_name]],
+        val2[[elem_name]],
+        paste0(where, "$", elem_name),
+        env,
+        ignore
+      )
     }
     return()
   }
-  if (!identical(names(val1),names(val2))) {
-    lines <- c(lines,
-               gettextf("%1$s have different names: %2$s <-> %3$s",
-                     where, tostring(names(val1)), tostring(names(val2))))
+  if (!identical(names(val1), names(val2))) {
+    lines <- c(
+      lines,
+      gettextf(
+        "%1$s have different names: %2$s <-> %3$s",
+        where,
+        tostring(names(val1)),
+        tostring(names(val2))
+      )
+    )
     differences <- differences + 1L
     assign("aantal", differences, env)
     assign("reportlines", lines, env)
     return() # no further examination if names different
   }
   if (length(val1) != length(val2)) {
-    lines <- c(lines, gettextf("%1$s have different length: %2$d <-> %3$d",
-                     where, length(val1), length(val2)))
+    lines <- c(
+      lines,
+      gettextf(
+        "%1$s have different length: %2$d <-> %3$d",
+        where,
+        length(val1),
+        length(val2)
+      )
+    )
     differences <- differences + 1L
     assign("aantal", differences, env)
     assign("reportlines", lines, env)
     return() # no further examination if lengths different
   }
-  elem.names <- names(val1)
-  if (is.null(elem.names)) {
-    elem.names <- as.character(seq_along(val1))
+  elem_names <- names(val1)
+  if (is.null(elem_names)) {
+    elem_names <- as.character(seq_along(val1))
   } else {
-    elem.names <- dQuote(elem.names)
+    elem_names <- dQuote(elem_names)
   }
   for (i in seq_along(val1)) {
-      elem.name <- elem.names[i]
-      if (is.na(val1[i]) && is.na(val2[i])) next
-      if (is.na(val1[i]) || is.na(val2[i]) || val1[i] != val2[i]) {
-        lines <- c(lines, gettextf("%1$s[%2$s] differ: %3$s <-> %4$s",
-                     where, elem.name,
-                     tostring(as.vector(val1[i])),
-                     tostring(as.vector(val2[i]))))
-        assign("aantal", differences + 1L, env)
+    elem_name <- elem_names[i]
+    if (is.na(val1[i]) && is.na(val2[i])) {
+      next
+    }
+    if (is.na(val1[i]) || is.na(val2[i]) || val1[i] != val2[i]) {
+      lines <- c(
+        lines,
+        gettextf(
+          "%1$s[%2$s] differ: %3$s <-> %4$s",
+          where,
+          elem_name,
+          tostring(as.vector(val1[i])),
+          tostring(as.vector(val2[i]))
+        )
+      )
+      assign("aantal", differences + 1L, env)
+      assign("reportlines", lines, env)
+      differences <- differences + 1L
+      if (differences >= max.differences) {
+        lines <- c(lines, gettext("Maximum number of differences reached!"))
         assign("reportlines", lines, env)
-        differences <- differences + 1L
-        if (differences >= max.differences) {
-          lines <- c(lines, gettext("Maximum number of differences reached!"))
-          assign("reportlines", lines, env)
-          break
-        }
+        break
       }
+    }
   }
-  return(invisible(NULL))
+  invisible(NULL)
 }

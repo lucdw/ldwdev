@@ -4,7 +4,10 @@
         fields = "Version"
     )
     packageStartupMessage(
-        "This is ", paste(pkgname, version), "\n",
-        pkgname, " is a package with simple tools for package development."
+        "This is ",
+        paste(pkgname, version),
+        "\n",
+        pkgname,
+        " is a package with simple tools for package development."
     )
 }
