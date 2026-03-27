@@ -312,7 +312,7 @@ calltree_html <- function(map, dest) {
     devfunc <- new("dev_func",
       name             = f,
       defined_in       = functies[[f]]$src,
-      defined_at_lines = c(functies[[f]]$def1[1], functies[[f]]$def2[3] + 1L - functies[[f]]$def2[1]),
+      defined_at_lines = c(functies[[f]]$def1[1], functies[[f]]$def2[3] + 1L - functies[[f]]$def1[1]),
       exported         = any(exports == f),
       calls            = listcalls[[f]],
       called_by        = xref[[f]],
@@ -678,7 +678,7 @@ tr:nth-child(even) {
         "</td><td>",
         functies[[alles[i]]]$def1[1],
         "</td><td>",
-        functies[[alles[i]]]$def2[3] + 1 - functies[[alles[i]]]$def2[1],
+        functies[[alles[i]]]$def2[3] + 1 - functies[[alles[i]]]$def1[1],
         "</td><td>"
       )
       icyc <- which(cyclo$name == alles[i])
