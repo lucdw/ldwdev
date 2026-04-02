@@ -14,15 +14,19 @@ An S4 class to represent a top-level function
 
 \item{\code{defined_in}}{A length-one character vector}
 
-\item{\code{defined_at_lines}}{A length-two integer vector giving the first line and the number of lines of the function definition}
+\item{\code{defined_at_lines}}{A length-two integer vector giving the first line
+and the number of lines of the function definition}
 
 \item{\code{exported}}{A length-one logical specifying if the function is exported}
 
-\item{\code{calls}}{A character vector with names of top-level functions called by this function}
+\item{\code{calls}}{A character vector with names of top-level functions called by
+this function}
 
-\item{\code{called_by}}{A character vector with names of top-level functions which call this function}
+\item{\code{called_by}}{A character vector with names of top-level functions which
+call this function}
 
-\item{\code{synonym_of}}{A length zero or one character vector with the name of the synonym function which really defines the body}
+\item{\code{synonym_of}}{A length zero or one character vector with the name of the
+synonym function which really defines the body}
 
 \item{\code{complexity}}{A length-one integer specifying the function complexity}
 }}

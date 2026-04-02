@@ -1,6 +1,6 @@
 #' @importFrom utils browseURL
 #' @importFrom utils getParseData
-get_parsed <- function(filename) {
+dev_parsed <- function(filename) {
   stopifnot(is.character(filename), length(filename) == 1)
   stopifnot(file.exists(filename))
   filelines <- suppressWarnings(readLines(filename))
@@ -11,7 +11,7 @@ get_parsed <- function(filename) {
   attr(temp, "basename") <- basename(filename)
   invisible(temp)
 }
-get_toplevel_assigns <- function(parseddata, parentid = 0L) {
+dev_toplevel_assigns <- function(parseddata, parentid = 0L) {
   exprs <- parseddata$id[parseddata$parent == parentid]
   retval <- list()
   for (i in seq_along(exprs)) {
@@ -35,7 +35,7 @@ get_toplevel_assigns <- function(parseddata, parentid = 0L) {
         parseddata$col2[parseddata$id == parseddata$parent[rij]],
         sep = ";"
       ),
-      expr = get_toplevel_assigns(parseddata, id),
+      expr = dev_toplevel_assigns(parseddata, id),
       paste0("U:", parseddata$token[rij])
     )
     retval[[i]] <- tmp
@@ -43,8 +43,8 @@ get_toplevel_assigns <- function(parseddata, parentid = 0L) {
   }
   unlist(retval)
 }
-get_toplevel <- function(parseddata) {
-  tla <- get_toplevel_assigns(parseddata)
+dev_toplevel <- function(parseddata) {
+  tla <- dev_toplevel_assigns(parseddata)
   asg <- which(tla == "LEFT_ASSIGN")
   functies <- list()
   synoniemen <- list()
@@ -102,15 +102,24 @@ get_toplevel <- function(parseddata) {
   }
   list(functies = functies, synoniemen = synoniemen)
 }
-get_function_calls <- function(parseddata, range) {
+dev_function_calls <- function(parseddata, range) {
   stopifnot(!missing(range), length(range) == 4, is.integer(range))
   frompos <- 10000L * range[1] + range[2]
   topos <- 10000L * range[3] + range[4]
   fcrows <- which(
     parseddata$token == "SYMBOL_FUNCTION_CALL" &
-      10000L * parseddata$line1 + parseddata$col1 >= frompos &
-      10000L * parseddata$line2 + parseddata$col2 <= topos
+    10000L * parseddata$line1 + parseddata$col1 >= frompos &
+    10000L * parseddata$line2 + parseddata$col2 <= topos
   )
+  for (i in seq_len(nrow(parseddata))) {
+    # symbols which are no slot or list element
+    if (parseddata$token[i] == "SYMBOL" && parseddata$text[i - 1L] != "$" &&
+      parseddata$text[i - 1L] != "@" && parseddata$text[i + 1] != "=" &&
+      parseddata$token[i + 1L] != "LEFT_ASSIGN" &&
+      10000L * parseddata$line1[i] + parseddata$col1[i] >= frompos &&
+      10000L * parseddata$line2[i] + parseddata$col2[i] <= topos
+    ) fcrows <- c(fcrows, i)
+  }
   docalls <- which(
     parseddata$token == "SYMBOL_FUNCTION_CALL" &
       10000L * parseddata$line1 + parseddata$col1 >= frompos &
@@ -120,8 +129,7 @@ get_function_calls <- function(parseddata, range) {
   docallfuncs <- character(0)
   for (j in docalls) {
     if (
-      parseddata$token[j + 3] == "SYMBOL" ||
-        parseddata$token[j + 3] == "STR_CONST"
+      parseddata$token[j + 3] == "STR_CONST"
     ) {
       docallfuncs <- c(docallfuncs, parseddata$text[j + 3])
     }

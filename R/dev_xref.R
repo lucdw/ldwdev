@@ -40,7 +40,7 @@ get_xref <- function(file = "") {
   stopifnot(is.character(file), length(file) > 0L)
   retval <- list()
   for (f in file) {
-    parseddata <- get_parsed(f)
+    parseddata <- dev_parsed(f)
     exprs <- parseddata$id[parseddata$parent == 0 & parseddata$token == "expr"]
     for (i in seq_along(exprs)) {
       subs <- parseddata[parseddata$parent == exprs[i], ]
@@ -64,7 +64,7 @@ get_xref <- function(file = "") {
             env <- new.env(parent = emptyenv())
             assign("func__file_", basename(f), env)
             assign("func__offset_", subs1$line1[1] - 1L, env)
-            get_vars(subs2, parseddata, env, TRUE)
+            dev_get_vars(subs2, parseddata, env, TRUE)
             retval[[funcname]] <- as.list(env, all.names = TRUE, sorted = TRUE)
           }
         }
@@ -73,7 +73,7 @@ get_xref <- function(file = "") {
   }
   retval
 }
-get_vars <- function(subs, parseddata, env, first) {
+dev_get_vars <- function(subs, parseddata, env, first) {
   offset <- env$func__offset_
   if (first) {
     symbolformals <- which(subs$token == "SYMBOL_FORMALS")
@@ -95,7 +95,7 @@ get_vars <- function(subs, parseddata, env, first) {
     if (subs$terminal[j] == FALSE) {
       subsubs <- parseddata[parseddata$parent == subs$id[j], ]
       if (nrow(subsubs) == 3L && any(subsubs$token[2L] == c("'@'", "'$'"))) {
-        vname <- get_composite_name(subsubs, parseddata)
+        vname <- dev_composite_name(subsubs, parseddata)
         lines <- get0(vname, env)
         if (is.null(lines)) {
           lines <- subs$line1[j] - offset
@@ -104,13 +104,13 @@ get_vars <- function(subs, parseddata, env, first) {
         }
         assign(vname, lines, env)
       } else {
-        get_vars(subsubs, parseddata, env, FALSE)
+        dev_get_vars(subsubs, parseddata, env, FALSE)
       }
     }
   }
   invisible(NULL)
 }
-get_composite_name <- function(subsubs, parseddata) {
+dev_composite_name <- function(subsubs, parseddata) {
   if (nrow(subsubs) == 1L) {
     return(subsubs$text[1])
   }
@@ -119,7 +119,7 @@ get_composite_name <- function(subsubs, parseddata) {
   if (subsubs$token[2] == "'$'") {
     coll <- "$"
   }
-  paste0(get_composite_name(subsubsubs, parseddata), coll, subsubs$text[3L])
+  paste0(dev_composite_name(subsubsubs, parseddata), coll, subsubs$text[3L])
 }
 
 
@@ -261,7 +261,7 @@ window.onload = function() {
 </head>
 <body>
   <h1>Xref functions in ",
-    h1xref(file),
+    dev_h1xref(file),
     ".</h1>\n",
     "  <select id='selector' onchange='FromSelect()' title='Choose function'>",
     sep = ""
@@ -285,7 +285,7 @@ window.onload = function() {
   sink()
   browseURL(paste0(dest, "/index.html"))
 }
-h1xref <- function(file) {
+dev_h1xref <- function(file) {
   if (length(file) == 1L) {
     return(file)
   }

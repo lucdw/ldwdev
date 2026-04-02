@@ -4,5 +4,5 @@ test_that("compare_files works", {
   writeLines(c("0", "1", "a", "b", "e", "f", "grrr", "h"), filenames[2])
   compare_files(filenames[1], filenames[2], filenames[3])
   expect_equal(readLines(filenames[3]),
-               c("0a1,2", "> 0", "> 1", "3,4d", "< c", "< d", "7c7", "< g", "---", "> grrr"))
+  c("0a1,2", "> 0", "> 1", "3,4d", "< c", "< d", "7c7", "< g", "---", "> grrr"))
 })

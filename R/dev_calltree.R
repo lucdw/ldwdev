@@ -1,7 +1,7 @@
 #' @importFrom cyclocomp cyclocomp_package_dir
 #' @importFrom utils packageVersion
 #' @importFrom methods new
-get_hash <- function(x) {
+dev_hash <- function(x) {
   p <- 257L
   m <- 1000033L
   hash_value <- 551017L
@@ -13,7 +13,10 @@ get_hash <- function(x) {
   }
   hash_value
 }
-get_call_info <- function(map) {
+dev_htmlnaam <- function(x) {
+  paste0("f", dev_hash(x), ".html")
+}
+dev_call_info <- function(map) {
   stopifnot(is.character(map), length(map) == 1L)
   files <- dir(map, pattern = "\\.[rR]$")
   if (length(files) == 0 && dir.exists(paste0(map, "/R"))) {
@@ -26,13 +29,13 @@ get_call_info <- function(map) {
   if (map != ".") {
     files <- paste0(map, "/", files)
   }
-  parsedfiles <- lapply(files, function(f) get_parsed(f))
+  parsedfiles <- lapply(files, function(f) dev_parsed(f))
   synoniemen <- list()
   functies <- list()
   functieparsed <- integer(0)
   for (i in seq_along(parsedfiles)) {
     parsedfile <- parsedfiles[[i]]
-    tmp <- get_toplevel(parsedfile)
+    tmp <- dev_toplevel(parsedfile)
     synoniemen <- c(synoniemen, tmp$synoniemen)
     functies <- c(functies, tmp$functies)
     pfiles <- rep.int(i, length(tmp$functies))
@@ -46,7 +49,7 @@ get_call_info <- function(map) {
   listcalls <- list()
   for (i in seq_along(functienamen)) {
     f <- functienamen[i]
-    calls <- get_function_calls(
+    calls <- dev_function_calls(
       parsedfiles[[functieparsed[f]]],
       functies[[f]]$def2
     )
@@ -78,7 +81,7 @@ get_call_info <- function(map) {
     xrefs = xref
   )
 }
-indirect_xrefs <- function(xrefs) {
+dev_indir_xrefs <- function(xrefs) {
   dir_xrefs <- lapply(xrefs, function(f) {
     a <- unlist(strsplit(f, "|", TRUE))
     unique(a)
@@ -138,7 +141,7 @@ indirect_xrefs <- function(xrefs) {
 get_func_calltree <- function(map, func) {
   stopifnot(is.character(map), length(map) == 1)
   stopifnot(is.character(func), length(func) > 0)
-  tmp <- get_call_info(map)
+  tmp <- dev_call_info(map)
   functies <- tmp$functies
   synoniemen <- tmp$synoniemen
   listcalls <- tmp$calls
@@ -223,116 +226,18 @@ print.calltree <- summary.calltree <- function(x, ...) {
     i <- i + 1L
   }
 }
-#' Create a list and html website with functions and calls between them of a package
-#'
-#' This function creates a list and optionally an html website with all R functions of a package
-#'
-#' @details
-#' The function determines the functions in the package by
-#' looking at the top-level assignments in the R files. Only
-#'  LEFT_ASSIGN \code{'<-'} symbols are looked at. Function calls
-#' via \code{do.call} are recognized if the first parameter of the call
-#' is positional and a symbol or a string constant (the function name).
-#' Functions called via \code{eval} or function definitions
-#' via \code{setMethod} are ignored!
-#'
-#' @param map the directory of the package
-#' @param dest the directory where the html files should be written, optional
-#'
-#' @return a list with objects of class \code{\linkS4class{dev_func}} for all top-level functions
-#'
-#' @examples
-#' \dontrun{
-#' temp <- calltree_html(".", "c:/temp/wwwcalltree")
-#' }
-#'
-#' @author Luc De Wilde
-#' @name calltree_html
-#' @rdname calltree_html
-#' @export
-calltree_html <- function(map, dest) {
-  if (missing(dest)) {
-    html <- FALSE
-  } else {
-    html <- TRUE
-    stopifnot(is.character(dest), length(dest) == 1L)
-  }
-  return_value <- list()
-  pkgname <- basename(normalizePath(map))
-  exports <- try(getNamespaceExports(pkgname))
-  if (inherits(exports, "try-error")) {
-    exports <- pkgname
-  }
-  xxx <- readLines(paste0(map, "/NAMESPACE"))
-  s3 <- grep("^ *S3method\\(.*, .*\\) *$", xxx, value = TRUE)
-  if (length(s3) > 0) {
-    s3 <- gsub(
-      "^ *S3m.*\\(.*,.*, *(.*)\\)",
-      "exports <- c(exports, \"\\1\")",
-      s3
-    )
-    s3 <- gsub(
-      "^ *S3m.*\\(([^,]*), *([^)]*)\\).*$",
-      "exports <- c(exports, \"\\1.\\2\")",
-      s3
-    )
-    eval(str2expression(s3))
-  }
-  namestar <- function(a) {
-    if (any(exports == a)) {
-      return(paste(a, "*"))
-    }
-    a
-  }
-  cyclo <- cyclocomp_package_dir(map)
-  tmp <- get_call_info(map)
-  functies <- tmp$functies
-  synoniemen <- tmp$synoniemen
-  listcalls <- tmp$calls
-  xref <- tmp$xrefs
-  indir_xrefs <- indirect_xrefs(tmp$xrefs)
-  if (html && !dir.exists(dest)) {
-    dir.create(dest)
-  }
-  functienamen <- names(functies)
-  synoniemnamen <- names(synoniemen)
-  htmlnamen <- list()
-  for (nn in functienamen) {
-    htmlnamen[[nn]] <- paste0("f", get_hash(nn))
-  }
-  for (nn in synoniemnamen) {
-    htmlnamen[[nn]] <- paste0("s", get_hash(nn))
-  }
-  alles <- sort(c(functienamen, synoniemnamen))
-  for (i in seq_along(functienamen)) {
-    f <- functienamen[i]
-    icyc <- which(cyclo$name == f)
-    cycval <- 0L
-    if (length(icyc) == 1L) cycval <- cyclo$cyclocomp[icyc]
-    devfunc <- new("dev_func",
-      name             = f,
-      defined_in       = functies[[f]]$src,
-      defined_at_lines = c(functies[[f]]$def1[1], functies[[f]]$def2[3] + 1L - functies[[f]]$def1[1]),
-      exported         = any(exports == f),
-      calls            = listcalls[[f]],
-      called_by        = xref[[f]],
-      synonym_of       = character(0L),
-      complexity       = cycval
-    )
-    rval1 <- list(devfunc)
-    names(rval1) <- f
-    return_value <- c(return_value, rval1)
-    if (!html) next
-    funccall <- listcalls[[f]]
-    sink(paste0(dest, "/", htmlnamen[[f]], ".html"))
-    cat(
-      "<!DOCTYPE html>
+
+dev_write_function_html <- function(pkgname, dev_func_obj,
+                                    indir_xrefs, namestar, dest) {
+sink(paste0(dest, "/", dev_htmlnaam(dev_func_obj@name)))
+cat(
+"<!DOCTYPE html>
 <html>
 <head>
 <title>",
       pkgname,
       " ",
-      f,
+      dev_func_obj@name,
       "</title>
 <style>
 h1 {
@@ -360,98 +265,205 @@ div.mycontainer div {
 </head>
 <body>
 <h1>",
-      f,
-      "</h1><p>defined on line ",
-      functies[[f]]$def1[1],
-      " of ",
-      functies[[f]]$src,
-      ", ",
-      functies[[f]]$def2[3] + 1 - functies[[f]]$def2[1],
-      " lines",
-      "</p\n><div class=\"mycontainer\">
-  <div style=\"border-color:#ffd200;\">
-  <h2>Functions called</h2>
-  "
-    )
-    if (length(funccall) > 0L) {
-      for (j in seq_along(funccall)) {
-        cat(
-          "<p class='lijst'><a href='",
-          htmlnamen[[funccall[j]]],
-          ".html'>",
-          namestar(funccall[j]),
-          "</a></p>\n",
-          sep = ""
-        )
-      }
-    } else {
-      cat("none")
-    }
+    dev_func_obj@name,
+    "</h1><p>defined on line ", dev_func_obj@defined_at_lines[1L],
+    " of ", dev_func_obj@defined_in,
+    ", ", dev_func_obj@defined_at_lines[2],
+    " lines",
+    "</p>\n"
+)
+  if (length(dev_func_obj@synonym_of) > 0L) {
     cat(
-      "</div>
-  <div style=\"border-color:#1e64c8;\">
-  <h2>Called by</h2>
-  "
-    )
-    if (is.null(xref[[f]])) {
-      cat("none")
-    } else {
-      for (j in seq_along(xref[[f]])) {
-        caller <- xref[[f]][j]
-        callers <- strsplit(caller, "|", fixed = TRUE)[[1]]
-        if (length(callers) == 2L) {
-          cat(
-            "<p class='lijst'><a href='",
-            htmlnamen[[callers[1]]],
-            ".html'>",
-            callers[1],
-            "</a> via ",
-            "<a href='",
-            htmlnamen[[callers[2]]],
-            ".html'>",
-            callers[2],
-            "</a></p>\n",
-            sep = ""
-          )
-        } else {
-          cat(
-            "<p class='lijst'><a href='",
-            htmlnamen[[caller]],
-            ".html'>",
-            namestar(caller),
-            "</a></p>\n",
-            sep = ""
-          )
-        }
-      }
-    }
+    "<p>This function is the same as <a href=\"",
+    dev_htmlnaam(dev_func_obj@synonym_of),
+    "\">",
+    dev_func_obj@synonym_of,
+    "</a></p>\n",
+    sep = ""
+  )
+  }
+cat("<div class=\"mycontainer\">
+<div style=\"border-color:#ffd200;\">
+<h2>Functions called</h2>
+"
+)
+if (length(dev_func_obj@calls) > 0L) {
+  for (j in seq_along(dev_func_obj@calls)) {
     cat(
-      "</div>
-  <div style=\"border-color:#3e9458;\">
-  <h2>Called indirectly by</h2>
-  "
+      "<p class='lijst'><a href='",
+      dev_htmlnaam(dev_func_obj@calls[j]),
+      "'>",
+      namestar(dev_func_obj@calls[j]),
+      "</a></p>\n",
+      sep = ""
     )
-    if (is.null(indir_xrefs[[f]]) || length(indir_xrefs[[f]]) == 0L) {
-      cat("none")
+  }
+} else {
+  cat("none")
+}
+cat(
+  "</div>
+<div style=\"border-color:#1e64c8;\">
+<h2>Called by</h2>
+"
+)
+if (is.null(dev_func_obj@called_by)) {
+  cat("none")
+} else {
+  for (j in seq_along(dev_func_obj@called_by)) {
+    caller <- dev_func_obj@called_by[j]
+    callers <- strsplit(caller, "|", fixed = TRUE)[[1]]
+    if (length(callers) == 2L) {
+      cat(
+        "<p class='lijst'><a href='",
+        dev_htmlnaam(callers[1]),
+        "'>",
+        callers[1],
+        "</a> via ",
+        "<a href='",
+        dev_htmlnaam(callers[2]),
+        "'>",
+        callers[2],
+        "</a></p>\n",
+        sep = ""
+      )
     } else {
-      for (j in seq_along(indir_xrefs[[f]])) {
-        caller <- indir_xrefs[[f]][j]
-        cat(
-          "<p class='lijst'><a href='",
-          htmlnamen[[caller]],
-          ".html'>",
-          namestar(caller),
-          "</a></p>\n",
-          sep = ""
-        )
-      }
+      cat(
+        "<p class='lijst'><a href='",
+        dev_htmlnaam(caller),
+        "'>",
+        namestar(caller),
+        "</a></p>\n",
+        sep = ""
+      )
     }
+  }
+}
+cat(
+  "</div>
+<div style=\"border-color:#3e9458;\">
+<h2>Called indirectly by</h2>
+"
+)
+if (is.null(indir_xrefs[[dev_func_obj@name]]) ||
+  length(indir_xrefs[[dev_func_obj@name]]) == 0L) {
+  cat("none")
+} else {
+  for (j in seq_along(indir_xrefs[[dev_func_obj@name]])) {
+    caller <- indir_xrefs[[dev_func_obj@name]][j]
     cat(
-      "</div>
-        </div>
-        </body>\n</html>\n"
+      "<p class='lijst'><a href='",
+      dev_htmlnaam(caller),
+      "'>",
+      namestar(caller),
+      "</a></p>\n",
+      sep = ""
     )
-    sink()
+  }
+}
+cat(
+  "</div>
+    </div>
+    </body>\n</html>\n"
+)
+sink()
+}
+
+#' Create a list and html website with functions and calls between them
+#' of a package
+#'
+#' This function creates a list and optionally an html website with all
+#'  R functions of a package
+#'
+#' @details
+#' The function determines the functions in the package by
+#' looking at the top-level assignments in the R files. Only
+#'  LEFT_ASSIGN \code{'<-'} symbols are looked at. Function calls
+#' via \code{do.call} are recognized if the first parameter of the call
+#' is positional and a symbol or a string constant (the function name).
+#' Functions called via \code{eval} or function definitions
+#' via \code{setMethod} are ignored!
+#'
+#' @param map the directory of the package
+#' @param dest the directory where the html files should be written, optional
+#'
+#' @return a list with objects of class \code{\linkS4class{dev_func}} for
+#' all top-level functions
+#'
+#' @examples
+#' \dontrun{
+#' temp <- calltree_html(".", "c:/temp/wwwcalltree")
+#' }
+#'
+#' @author Luc De Wilde
+#' @name calltree_html
+#' @rdname calltree_html
+#' @export
+calltree_html <- function(map, dest) {
+  if (missing(dest)) {
+    html <- FALSE
+  } else {
+    html <- TRUE
+    stopifnot(is.character(dest), length(dest) == 1L)
+  }
+  return_value <- list()
+  pkgname <- basename(normalizePath(map))
+  exports <- getNamespaceExports(pkgname)
+  namestar <- function(a) {
+    if (any(exports == a)) {
+      return(paste(a, "*"))
+    }
+    a
+  }
+  xxx <- readLines(paste0(map, "/NAMESPACE"))
+  s3 <- grep("^ *S3method\\(.*, .*\\) *$", xxx, value = TRUE)
+  if (length(s3) > 0) {
+    s3 <- gsub(
+      "^ *S3m.*\\(.*,.*, *(.*)\\)",
+      "exports <- c(exports, \"\\1\")",
+      s3
+    )
+    s3 <- gsub(
+      "^ *S3m.*\\(([^,]*), *([^)]*)\\).*$",
+      "exports <- c(exports, \"\\1.\\2\")",
+      s3
+    )
+    eval(str2expression(s3))
+  }
+  cyclo <- cyclocomp_package_dir(map)
+  tmp <- dev_call_info(map)
+  functies <- tmp$functies
+  synoniemen <- tmp$synoniemen
+  listcalls <- tmp$calls
+  xref <- tmp$xrefs
+  indir_xrefs <- dev_indir_xrefs(tmp$xrefs)
+  if (html && !dir.exists(dest)) {
+    dir.create(dest)
+  }
+  functienamen <- names(functies)
+  synoniemnamen <- names(synoniemen)
+  alles <- sort(c(functienamen, synoniemnamen))
+  for (i in seq_along(functienamen)) {
+    f <- functienamen[i]
+    icyc <- which(cyclo$name == f)
+    cycval <- 0L
+    if (length(icyc) == 1L) cycval <- cyclo$cyclocomp[icyc]
+    devfunc <- new("dev_func",
+      name             = f,
+      defined_in       = functies[[f]]$src,
+      defined_at_lines = c(functies[[f]]$def1[1], functies[[f]]$def2[3] +
+        1L - functies[[f]]$def1[1]),
+      exported         = any(exports == f),
+      calls            = listcalls[[f]],
+      called_by        = xref[[f]],
+      synonym_of       = character(0L),
+      complexity       = cycval
+    )
+    rval1 <- list(devfunc)
+    names(rval1) <- f
+    return_value <- c(return_value, rval1)
+    if (html)
+      dev_write_function_html(pkgname, devfunc, indir_xrefs, namestar, dest)
   }
   for (i in seq_along(synoniemnamen)) {
     f <- synoniemnamen[i]
@@ -470,131 +482,11 @@ div.mycontainer div {
     rval1 <- list(devfunc)
     names(rval1) <- f
     return_value <- c(return_value, rval1)
-    if (!html) next
-    sink(paste0(dest, "/", htmlnamen[[f]], ".html"))
-    cat(
-      "<!DOCTYPE html>
-  <html>
-  <head>
-  <title>",
-      pkgname,
-      " ",
-      f,
-      "</title>
-  </head>
-  <style>
-h1 {
- color: #1e64c8;
-}
-p.lijst {
- margin-top: 0.5em;
- margin-bottom: 0.5em;
-}
-p.lijst:nth-child(even) {
-  background-color: #dddddd;
-}
-div.mycontainer {
-  width:99%;
-  overflow:auto;
-}
-div.mycontainer div {
-  width:31%;
-  float:left;
-  border-style: solid;
-  border-width: 5px;
-  margin: 4px;
-}
-</style>
-      <body>
-      <h1>",
-      f,
-      "</h1>\n<p>defined on line ",
-      synoniemen[[f]]$def1[1],
-      " of ",
-      synoniemen[[f]]$src,
-      "</p>\n"
-    )
-    cat(
-      "<p>This function is the same as <a href=\"",
-      htmlnamen[[synoniemen[[f]]$name]],
-      ".html\">",
-      synoniemen[[f]]$name,
-      "</a></p>\n",
-      sep = ""
-    )
-    cat(
-      "</p><div class=\"mycontainer\">
-  <div style=\"border-color:#ffd200;\">
-  <h2>Functions called",
-      synoniemen[[f]]$name,
-      "</h2>
-  "
-    )
-    if (length(funccall) > 0L) {
-      for (j in seq_along(funccall)) {
-        cat(
-          "<p class='lijst'><a href='",
-          htmlnamen[[funccall[j]]],
-          ".html'>",
-          namestar(funccall[j]),
-          "</a></p>\n",
-          sep = ""
-        )
-      }
-    } else {
-      cat("none")
-    }
-    cat(
-      "</div>
-  <div style=\"border-color:#1e64c8;\">
-  <h2>Called by</h2>
-  "
-    )
-    if (is.null(xref[[f]])) {
-      cat("none")
-    } else {
-      for (j in seq_along(xref[[f]])) {
-        caller <- xref[[f]][j]
-        cat(
-          "<p class='lijst'><a href='",
-          htmlnamen[[caller]],
-          ".html'>",
-          namestar(caller),
-          "</a></p>\n",
-          sep = ""
-        )
-      }
-    }
-    cat(
-      "</div>
-  <div style=\"border-color:#3e9458;\">
-  <h2>Called indirectly by</h2>
-  "
-    )
-    if (is.null(indir_xrefs[[f]]) || length(indir_xrefs[[f]]) == 0L) {
-      cat("none")
-    } else {
-      for (j in seq_along(indir_xrefs[[f]])) {
-        caller <- indir_xrefs[[f]][j]
-        cat(
-          "<p class='lijst'><a href='",
-          htmlnamen[[caller]],
-          ".html'>",
-          namestar(caller),
-          "</a></p>\n",
-          sep = ""
-        )
-      }
-    }
-    cat(
-      "</div>
-        </div>
-        </body>\n</html>\n"
-    )
-    sink()
+    if (html)
+      dev_write_function_html(pkgname, devfunc, indir_xrefs, namestar, dest)
   }
-  ################## write index.html #######################
   if (!html) return(return_value)
+  ################## write index.html #######################
   sink(paste0(dest, "/index.html"))
   cat(
     "<!DOCTYPE html>
@@ -649,8 +541,8 @@ tr:nth-child(even) {
   for (i in seq_along(alles)) {
     cat(
       "<tr><td><a href=\"",
-      htmlnamen[[alles[i]]],
-      ".html\", target=\"_blank\">",
+      dev_htmlnaam(alles[i]),
+      "\", target=\"_blank\">",
       namestar(alles[i]),
       sep = ""
     )

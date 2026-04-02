@@ -2,7 +2,8 @@
 % Please edit documentation in R/dev_calltree.R
 \name{calltree_html}
 \alias{calltree_html}
-\title{Create a list and html website with functions and calls between them of a package}
+\title{Create a list and html website with functions and calls between them
+of a package}
 \usage{
 calltree_html(map, dest)
 }
@@ -12,10 +13,12 @@ calltree_html(map, dest)
 \item{dest}{the directory where the html files should be written, optional}
 }
 \value{
-a list with objects of class \code{\linkS4class{dev_func}} for all top-level functions
+a list with objects of class \code{\linkS4class{dev_func}} for
+all top-level functions
 }
 \description{
-This function creates a list and optionally an html website with all R functions of a package
+This function creates a list and optionally an html website with all
+R functions of a package
 }
 \details{
 The function determines the functions in the package by
