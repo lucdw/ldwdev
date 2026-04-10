@@ -10,16 +10,12 @@ get_xref(file = "")
 \item{file}{a character vector naming the files to search in}
 }
 \value{
-list with for each top.level function a named list with:
-\itemize{
-\item func__file_ the name of the file where function is found;
-\item func__offset_ number of lines before the function definition;
-\item the variables used and the relative line where they are used.
-}
+named list with for each file a named list with for each found top-level
+function in the file a named list with for each variable in the function a dev_var object
 }
 \description{
 This function creates a cross-reference of the variables for
-all functions defined on the top-level in a .R-file.
+all functions defined on the top-level in .R-files.
 }
 \examples{
 filename <- tempfile(fileext = ".R")
@@ -30,15 +26,21 @@ writeLines(c(
  "}"
 ), filename)
 tmp <- get_xref(filename)
-for (j in seq_along(tmp)) {
-  cat("function ", names(tmp)[j])
-  tmp1 <- tmp[[j]]
-  cat(" found in", tmp1$func__file_, "at offset", tmp1$func__offset_, ".\n")
-  tmp1$func__file_ <- NULL
-  tmp1$func__offset_ <- NULL
-  for (k in seq_along(tmp1)) {
-    cat("  ", names(tmp1)[k], ":",
-    tostring(tmp1[[k]], "none"), "\n")
+for (ifile in seq_along(tmp)) {
+  cat(names(tmp)[ifile], "\n")
+  thefile <- tmp[[ifile]]
+  for (ifunc in seq_along(thefile)) {
+    cat(" ", names(thefile)[ifunc], "\n")
+    thefunc <- thefile[[ifunc]]
+    for (v in thefunc) {
+      cat("   ", v@name)
+      if (v@argument) cat(" is an argument of the function.")
+      cat("\n    References: ")
+      for (ref in v@xrefs) {
+        cat(ref@line, ":", ref@position, if (ref@modified) "*", " | ", sep = "")
+      }
+      cat("\n")
+    }
   }
 }
 unlink(filename)

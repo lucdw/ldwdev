@@ -24,3 +24,18 @@ setClass("dev_func",
     complexity       = "integer"
   )
 )
+setClass("dev_ref",
+ slots = c(
+  line               = "integer",
+  position           = "integer",
+  modified           = "logical"
+ )
+)
+setClass("dev_var",
+  slots = c(
+    name               = "character",
+    argument           = "logical",
+    xrefs              = "list"
+  )
+)
+

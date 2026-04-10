@@ -2,20 +2,19 @@
 % Please edit documentation in R/dev_xref.R
 \name{xref_html}
 \alias{xref_html}
-\title{Create a html page with functions and xrefs of variables}
+\title{Create html pages with functions and xrefs of variables in R files}
 \usage{
-xref_html(file, dest, title = paste("Xref", dirname(file[1L])))
+xref_html(file, dest)
 }
 \arguments{
-\item{file}{vector of filenames to look in}
+\item{file}{vector of filenames}
 
 \item{dest}{the directory where the html files should be written}
-
-\item{title}{the title for the html file}
 }
 \description{
-This function creates a html page with all R functions in a list
-of R-files and the variables used therein.
+This function creates a html page with all R functions in an R file
+and the variables used therein. The resulting htmlfiles will be in the
+dest directory with name \verb{R file name}.html.
 }
 \details{
 The function determines the functions in the R files by
