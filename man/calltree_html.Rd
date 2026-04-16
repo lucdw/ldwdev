@@ -5,7 +5,7 @@
 \title{Create a list and html website with functions and calls between them
 of a package}
 \usage{
-calltree_html(map, dest)
+calltree_html(map, dest = NULL)
 }
 \arguments{
 \item{map}{the directory of the package}

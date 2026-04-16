@@ -1,4 +1,4 @@
-#' @importFrom cyclocomp cyclocomp_package_dir
+#' @importFrom cyclocomp cyclocomp
 #' @importFrom utils packageVersion
 #' @importFrom methods new
 dev_hash <- function(x) {
@@ -103,6 +103,25 @@ dev_indir_xrefs <- function(xrefs) {
   })
   names(indir_xrefs) <- names(xrefs)
   indir_xrefs
+}
+dev_indir_calls <- function(calls) {
+  add_call <- function(x, curlist) {
+    dxx <- calls[[x]]
+    if (length(dxx) == 0L || all(dxx == x)) {
+      return(curlist)
+    }
+    cl <- unique(c(curlist, dxx))
+    for (xx in setdiff(dxx, curlist)) {
+      cl <- add_call(xx, cl)
+    }
+    unique(cl)
+  }
+  all.calls <- lapply(names(calls), function(x) add_call(x, x))
+  indir_calls <- lapply(seq_along(calls), function(j) {
+    setdiff(all.calls[[j]], c(names(calls)[j], calls[[j]]))
+  })
+  names(indir_calls) <- names(calls)
+  indir_calls
 }
 #' Create a call tree for a function in the r files of a package
 #'
@@ -228,7 +247,7 @@ print.calltree <- summary.calltree <- function(x, ...) {
 }
 
 dev_write_function_html <- function(pkgname, dev_func_obj,
-                                    indir_xrefs, namestar, dest) {
+                                    indir_xrefs, indir_calls, namestar, dest) {
 sink(paste0(dest, "/", dev_htmlnaam(dev_func_obj@name)))
 cat(
 "<!DOCTYPE html>
@@ -255,7 +274,7 @@ div.mycontainer {
   overflow:auto;
 }
 div.mycontainer div {
-  width:31%;
+  width:23%;
   float:left;
   border-style: solid;
   border-width: 5px;
@@ -283,8 +302,8 @@ div.mycontainer div {
   )
   }
 cat("<div class=\"mycontainer\">
-<div style=\"border-color:#ffd200;\">
-<h2>Functions called</h2>
+<div style=\"border-color:#dddd00;\">
+<h2>Calls functions</h2>
 "
 )
 if (length(dev_func_obj@calls) > 0L) {
@@ -303,7 +322,29 @@ if (length(dev_func_obj@calls) > 0L) {
 }
 cat(
   "</div>
-<div style=\"border-color:#1e64c8;\">
+<div style=\"border-color:#ffff00;\">
+<h2>Calls indirectly functions</h2>
+"
+)
+if (is.null(indir_calls[[dev_func_obj@name]]) ||
+  length(indir_calls[[dev_func_obj@name]]) == 0L) {
+  cat("none")
+} else {
+  for (j in seq_along(indir_calls[[dev_func_obj@name]])) {
+    calledone <- indir_calls[[dev_func_obj@name]][j]
+    cat(
+      "<p class='lijst'><a href='",
+      dev_htmlnaam(calledone),
+      "'>",
+      namestar(calledone),
+      "</a></p>\n",
+      sep = ""
+    )
+  }
+}
+cat(
+  "</div>
+<div style=\"border-color:#00dddd;\">
 <h2>Called by</h2>
 "
 )
@@ -341,7 +382,7 @@ if (is.null(dev_func_obj@called_by)) {
 }
 cat(
   "</div>
-<div style=\"border-color:#3e9458;\">
+<div style=\"border-color:#00ffff;\">
 <h2>Called indirectly by</h2>
 "
 )
@@ -399,7 +440,7 @@ sink()
 #' @name calltree_html
 #' @rdname calltree_html
 #' @export
-calltree_html <- function(map, dest) {
+calltree_html <- function(map, dest = NULL) {
   if (missing(dest)) {
     html <- FALSE
   } else {
@@ -409,6 +450,7 @@ calltree_html <- function(map, dest) {
   return_value <- list()
   pkgname <- basename(normalizePath(map))
   exports <- getNamespaceExports(pkgname)
+  ns <- getNamespace(pkgname)
   namestar <- function(a) {
     if (any(exports == a)) {
       return(paste(a, "*"))
@@ -430,24 +472,27 @@ calltree_html <- function(map, dest) {
     )
     eval(str2expression(s3))
   }
-  cyclo <- cyclocomp_package_dir(map)
   tmp <- dev_call_info(map)
   functies <- tmp$functies
   synoniemen <- tmp$synoniemen
   listcalls <- tmp$calls
   xref <- tmp$xrefs
-  indir_xrefs <- dev_indir_xrefs(tmp$xrefs)
+  indir_xrefs <- dev_indir_xrefs(xref)
+  indir_calls <- dev_indir_calls(listcalls)
   if (html && !dir.exists(dest)) {
     dir.create(dest)
   }
   functienamen <- names(functies)
   synoniemnamen <- names(synoniemen)
   alles <- sort(c(functienamen, synoniemnamen))
+  functiecount <- length(functienamen)
+  allescount <- length(alles)
+  if (interactive()) cat("\n")
   for (i in seq_along(functienamen)) {
+    if (interactive()) cat("\rget functions info",
+      format((100L * i) %/% allescount, width = 4L), "%")
     f <- functienamen[i]
-    icyc <- which(cyclo$name == f)
-    cycval <- 0L
-    if (length(icyc) == 1L) cycval <- cyclo$cyclocomp[icyc]
+    cycval <- cyclocomp(ns[[f]])
     devfunc <- new("dev_func",
       name             = f,
       defined_in       = functies[[f]]$src,
@@ -463,9 +508,12 @@ calltree_html <- function(map, dest) {
     names(rval1) <- f
     return_value <- c(return_value, rval1)
     if (html)
-      dev_write_function_html(pkgname, devfunc, indir_xrefs, namestar, dest)
+      dev_write_function_html(pkgname, devfunc, indir_xrefs, indir_calls, namestar, dest)
   }
+  cycval <- 0L
   for (i in seq_along(synoniemnamen)) {
+    if (interactive()) cat("\rget functions info",
+      format((100L * (i + functiecount)) %/% allescount, width = 4L), "%")
     f <- synoniemnamen[i]
     funccall <- listcalls[[synoniemen[[f]]$name]]
     if (is.null(funccall)) funccall <- character(0)
@@ -483,8 +531,9 @@ calltree_html <- function(map, dest) {
     names(rval1) <- f
     return_value <- c(return_value, rval1)
     if (html)
-      dev_write_function_html(pkgname, devfunc, indir_xrefs, namestar, dest)
+      dev_write_function_html(pkgname, devfunc, indir_xrefs, indir_calls, namestar, dest)
   }
+  if (interactive()) cat("\n")
   if (!html) return(return_value)
   ################## write index.html #######################
   sink(paste0(dest, "/index.html"))
@@ -573,8 +622,7 @@ tr:nth-child(even) {
         functies[[alles[i]]]$def2[3] + 1 - functies[[alles[i]]]$def1[1],
         "</td><td>"
       )
-      icyc <- which(cyclo$name == alles[i])
-      if (length(icyc) == 1L) cat(cyclo$cyclocomp[icyc])
+      cat(cyclocomp(ns[[alles[i]]]))
     }
     cat("</td></tr>\n")
   }
