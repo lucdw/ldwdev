@@ -1,20 +1,22 @@
-#' Gets a cross-reference of variables used in top-level defined functions
+#' Gets a cross-reference of variables used in functions
 #'
 #' This function creates a cross-reference of the variables for
-#' all functions defined on the top-level in .R-files.
+#' all functions defined in .R-files.
 #'
 #' @param file a character vector naming the files to search in
 #'
-#' @return named list with for each file a named list with for each found top-level
-#'  function in the file a named list with for each variable in the function a dev_var object
+#' @return named list with for each file a named list with for each found
+#'  function in the file a named list with for each variable in the
+#'  function a dev_var object
 #'
 #' @examples
 #' filename <- tempfile(fileext = ".R")
 #' writeLines(c(
-#'  "f1 <- function(a, s3list, s4obj, ...) {",
+#'  "f1 <- f2 <- function(a, s3list, s4obj, ...) {",
 #'  " b <- paste(\"sum:\", s3list$teller + s4obj@teller)",
 #'  " return(paste0(a, b))",
-#'  "}"
+#'  "}",
+#'  "f3 <- function(x) print(x)"
 #' ), filename)
 #' tmp <- get_xref(filename)
 #' for (ifile in seq_along(tmp)) {
@@ -34,6 +36,7 @@
 #'     }
 #'   }
 #' }
+#' cat("*** Note that f1 does not appear as a function defined here!\n")
 #' unlink(filename)
 #'
 #' @author Luc De Wilde
@@ -46,7 +49,7 @@ get_xref <- function(file = "") {
   for (f in file) {
     retval[[f]] <- list()
     parseddata <- dev_parsed(f)
-    exprs <- parseddata$id[parseddata$parent == 0 & parseddata$token == "expr"]
+    exprs <- parseddata$id[parseddata$parent >= 0 & parseddata$token == "expr"]
     for (i in seq_along(exprs)) {
       subs <- parseddata[parseddata$parent == exprs[i], ]
       asg <- which(subs$token == "LEFT_ASSIGN")

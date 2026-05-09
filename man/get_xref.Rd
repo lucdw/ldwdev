@@ -2,7 +2,7 @@
 % Please edit documentation in R/dev_xref.R
 \name{get_xref}
 \alias{get_xref}
-\title{Gets a cross-reference of variables used in top-level defined functions}
+\title{Gets a cross-reference of variables used in functions}
 \usage{
 get_xref(file = "")
 }
@@ -10,20 +10,22 @@ get_xref(file = "")
 \item{file}{a character vector naming the files to search in}
 }
 \value{
-named list with for each file a named list with for each found top-level
-function in the file a named list with for each variable in the function a dev_var object
+named list with for each file a named list with for each found
+function in the file a named list with for each variable in the
+function a dev_var object
 }
 \description{
 This function creates a cross-reference of the variables for
-all functions defined on the top-level in .R-files.
+all functions defined in .R-files.
 }
 \examples{
 filename <- tempfile(fileext = ".R")
 writeLines(c(
- "f1 <- function(a, s3list, s4obj, ...) {",
+ "f1 <- f2 <- function(a, s3list, s4obj, ...) {",
  " b <- paste(\"sum:\", s3list$teller + s4obj@teller)",
  " return(paste0(a, b))",
- "}"
+ "}",
+ "f3 <- function(x) print(x)"
 ), filename)
 tmp <- get_xref(filename)
 for (ifile in seq_along(tmp)) {
