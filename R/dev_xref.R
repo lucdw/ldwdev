@@ -16,8 +16,25 @@
 #'  " b <- paste(\"sum:\", s3list$teller + s4obj@teller)",
 #'  " return(paste0(a, b))",
 #'  "}",
-#'  "f3 <- function(x) print(x)"
+#'  "f3 <- function(x) {",
+#'  "   a <- 7",
+#'  "   f4 <- function(b) {",
+#'  "      cc <- 3.675439",
+#'  "      q <- b + cc",
+#'  "      q",
+#'  "    }",
+#'  "   f4(a)",
+#'  "}",
+#'  "f5 <- function(x) {",
+#'  "  dd <- 66",
+#'  "  ee <- 77",
+#'  "  sapply(x, function(y) {",
+#'  "    dd <- 12",
+#'  "    paste(y, dd, sep = '__')",
+#'  "  })",
+#'  "}"
 #' ), filename)
+#' cat(paste(readLines(filename), collapse = "\n"))
 #' tmp <- get_xref(filename)
 #' for (ifile in seq_along(tmp)) {
 #'   cat(names(tmp)[ifile], "\n")
@@ -36,7 +53,9 @@
 #'     }
 #'   }
 #' }
-#' cat("*** Note that f1 does not appear as a function defined here!\n")
+#' cat("*** Note that f1 does not appear as a function defined here!
+#' *** Note that variable b occurs in function f2 and f4, but with seperate references!
+#' *** Note the anonym function on line 17!")
 #' unlink(filename)
 #'
 #' @author Luc De Wilde
@@ -50,6 +69,7 @@ get_xref <- function(file = "") {
     retval[[f]] <- list()
     parseddata <- dev_parsed(f)
     exprs <- parseddata$id[parseddata$parent >= 0 & parseddata$token == "expr"]
+    function_ids <- integer(0)
     for (i in seq_along(exprs)) {
       subs <- parseddata[parseddata$parent == exprs[i], ]
       asg <- which(subs$token == "LEFT_ASSIGN")
@@ -67,14 +87,24 @@ get_xref <- function(file = "") {
               subs1$token[1L] == "SYMBOL" &&
               subs2$token[1L] == "FUNCTION"
           ) {
-            # found a function on top-level
+            # found a function
             funcname <- subs1$text
             env <- new.env(parent = emptyenv())
             dev_get_vars(subs2, parseddata, env, TRUE)
             retval[[f]][[funcname]] <- as.list(env, all.names = TRUE, sorted = TRUE)
+            function_ids <- c(function_ids, subs2$id[1L])
           }
         }
       }
+    }
+    allfuncs  <- which(parseddata$token == "FUNCTION")
+    for (j in allfuncs) {
+      if (parseddata$id[j] %in% function_ids) next
+      funcname <- paste0("anonym_line_", parseddata$line1[j])
+      env <- new.env(parent = emptyenv())
+      dev_get_vars(parseddata[parseddata$parent == parseddata$parent[j], ],
+                     parseddata, env, TRUE)
+      retval[[f]][[funcname]] <-  as.list(env, all.names = TRUE, sorted = TRUE)
     }
   }
   retval
@@ -115,7 +145,8 @@ dev_get_vars <- function(subs, parseddata, env, first, ismodified) {
     } else {
       if (subs$token[jj] %in% c("expr", "forcond")) {
         subsubs <- parseddata[parseddata$parent == subs$id[jj], ]
-        dev_get_vars(subsubs, parseddata, env, FALSE, jj < LA[1L])
+        # print(subsubs)
+        if (subsubs$text[1L] != "function") dev_get_vars(subsubs, parseddata, env, FALSE, jj < LA[1L])
       }
       skipthis <- TRUE
       }

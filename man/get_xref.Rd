@@ -25,8 +25,25 @@ writeLines(c(
  " b <- paste(\"sum:\", s3list$teller + s4obj@teller)",
  " return(paste0(a, b))",
  "}",
- "f3 <- function(x) print(x)"
+ "f3 <- function(x) {",
+ "   a <- 7",
+ "   f4 <- function(b) {",
+ "      cc <- 3.675439",
+ "      q <- b + cc",
+ "      q",
+ "    }",
+ "   f4(a)",
+ "}",
+ "f5 <- function(x) {",
+ "  dd <- 66",
+ "  ee <- 77",
+ "  sapply(x, function(y) {",
+ "    dd <- 12",
+ "    paste(y, dd, sep = '__')",
+ "  })",
+ "}"
 ), filename)
+cat(paste(readLines(filename), collapse = "\n"))
 tmp <- get_xref(filename)
 for (ifile in seq_along(tmp)) {
   cat(names(tmp)[ifile], "\n")
@@ -45,6 +62,9 @@ for (ifile in seq_along(tmp)) {
     }
   }
 }
+cat("*** Note that f1 does not appear as a function defined here!
+*** Note that variable b occurs in function f2 and f4, but with seperate references!
+*** Note the anonym function on line 17!")
 unlink(filename)
 
 }
