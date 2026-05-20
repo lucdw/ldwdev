@@ -34,6 +34,8 @@ dev_call_info <- function(map) {
   functies <- list()
   functieparsed <- integer(0)
   for (i in seq_along(parsedfiles)) {
+    if (interactive()) cat("\rget R source info",
+      format((100L * i) %/% length(parsedfiles), width = 4L), "%")
     parsedfile <- parsedfiles[[i]]
     tmp <- dev_toplevel(parsedfile)
     synoniemen <- c(synoniemen, tmp$synoniemen)
@@ -42,12 +44,15 @@ dev_call_info <- function(map) {
     names(pfiles) <- names(tmp$functies)
     functieparsed <- c(functieparsed, pfiles)
   }
+  if (interactive()) cat("\n")
   functienamen <- names(functies)
   synoniemnamen <- names(synoniemen)
   alles <- sort(c(functienamen, synoniemnamen))
   xref <- list()
   listcalls <- list()
   for (i in seq_along(functienamen)) {
+    if (interactive()) cat("\rget function calls",
+      format((100L * i) %/% length(functienamen), width = 4L), "%")
     f <- functienamen[i]
     calls <- dev_function_calls(
       parsedfiles[[functieparsed[f]]],
@@ -67,6 +72,7 @@ dev_call_info <- function(map) {
       }
     }
   }
+  if (interactive()) cat("\n")
   for (i in seq_along(alles)) {
     f <- alles[i]
     if (is.null(listcalls[[f]])) {
@@ -489,7 +495,7 @@ calltree_html <- function(map, dest = NULL) {
   allescount <- length(alles)
   if (interactive()) cat("\n")
   for (i in seq_along(functienamen)) {
-    if (interactive()) cat("\rget functions info",
+    if (interactive()) cat("\rget functions complexity",
       format((100L * i) %/% allescount, width = 4L), "%")
     f <- functienamen[i]
     cycval <- cyclocomp(ns[[f]])
@@ -512,7 +518,7 @@ calltree_html <- function(map, dest = NULL) {
   }
   cycval <- 0L
   for (i in seq_along(synoniemnamen)) {
-    if (interactive()) cat("\rget functions info",
+    if (interactive()) cat("\rget functions complexity",
       format((100L * (i + functiecount)) %/% allescount, width = 4L), "%")
     f <- synoniemnamen[i]
     funccall <- listcalls[[synoniemen[[f]]$name]]
