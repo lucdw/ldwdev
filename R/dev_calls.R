@@ -42,7 +42,7 @@ get_calls <- function(files = "") {
     retval1 <- list()
     parseddata <- dev_parsed(f)
     fcalls <- parseddata$id[parseddata$token == "SYMBOL_FUNCTION_CALL"]
-    for (i in seq_along(fcalls)) { 
+    for (i in seq_along(fcalls)) {
       func <- parseddata$text[parseddata$id == fcalls[i]]
       exprid <- parseddata$parent[parseddata$id == fcalls[i]]
       exprexprid <- parseddata$parent[parseddata$id == exprid]

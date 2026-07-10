@@ -12,6 +12,26 @@ dev_parsed <- function(filename) {
   invisible(temp)
 }
 dev_toplevel_assigns <- function(parseddata, parentid = 0L) {
+  checkalias <- function(sfcid) {
+    if (parseddata$text[parseddata$id == sfcid] == "lav_alias") {
+      parentsfc <- parseddata$parent[parseddata$id == sfcid]
+      grandparentsfc <- parseddata$parent[parseddata$id == parentsfc]
+      tmp1 <- parseddata[parseddata$parent == grandparentsfc, ]
+      if (nrow(tmp1) == 4L) {
+        tmp2 <- parseddata[parseddata$parent == tmp1$id[3L], ]
+        if (nrow(tmp2) == 1L && tmp2$token == "STR_CONST") {
+          return(paste(
+            "SYMBOL",
+            gsub('"', '', tmp2$text, fixed = TRUE),
+            tmp2$line1,
+            tmp2$col1 + 1L,
+            sep = ";"
+        ))
+        }
+      }
+    }
+    paste0("U:", parseddata$text[sfcid])
+  }
   exprs <- parseddata$id[parseddata$parent == parentid]
   retval <- list()
   for (i in seq_along(exprs)) {
@@ -36,6 +56,7 @@ dev_toplevel_assigns <- function(parseddata, parentid = 0L) {
         sep = ";"
       ),
       expr = dev_toplevel_assigns(parseddata, id),
+      SYMBOL_FUNCTION_CALL = checkalias(id),
       paste0("U:", parseddata$token[rij])
     )
     retval[[i]] <- tmp
@@ -135,4 +156,15 @@ dev_function_calls <- function(parseddata, range) {
     }
   }
   sort(unique(c(docallfuncs, parseddata$text[fcrows])))
+}
+openPDF <- function(f) {
+  os <- .Platform$OS.type
+  if (os=="windows")
+    shell.exec(normalizePath(f))
+  else {
+    pdf <- getOption("pdfviewer", default='')
+    if (nchar(pdf)==0)
+      stop("The 'pdfviewer' option is not set. Use options(pdfviewer=...)")
+    system2(pdf, args=c(f))
+  }
 }
