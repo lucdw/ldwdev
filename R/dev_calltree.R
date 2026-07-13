@@ -18,6 +18,7 @@ dev_htmlnaam <- function(x) {
 }
 dev_call_info <- function(map) {
   stopifnot(is.character(map), length(map) == 1L)
+  showprogress <- interactive() && !getOption("quiet", FALSE)
   files <- dir(map, pattern = "\\.[rR]$")
   if (length(files) == 0 && dir.exists(paste0(map, "/R"))) {
     map <- paste0(map, "/R")
@@ -33,9 +34,10 @@ dev_call_info <- function(map) {
   synoniemen <- list()
   functies <- list()
   functieparsed <- integer(0)
+  cat("get R source info\n")
+  if (showprogress) pb <- txtProgressBar(style = 3)
   for (i in seq_along(parsedfiles)) {
-    if (interactive()) cat("\rget R source info",
-      format((100L * i) %/% length(parsedfiles), width = 4L), "%")
+    if (showprogress) setTxtProgressBar(pb, i / length(parsedfiles))
     parsedfile <- parsedfiles[[i]]
     tmp <- dev_toplevel(parsedfile)
     synoniemen <- c(synoniemen, tmp$synoniemen)
@@ -44,15 +46,16 @@ dev_call_info <- function(map) {
     names(pfiles) <- names(tmp$functies)
     functieparsed <- c(functieparsed, pfiles)
   }
-  if (interactive()) cat("\n")
+  if (showprogress) close(pb)
   functienamen <- names(functies)
   synoniemnamen <- names(synoniemen)
   alles <- sort(c(functienamen, synoniemnamen))
   xref <- list()
   listcalls <- list()
+  cat("get function calls\n")
+  if (showprogress) pb <- txtProgressBar(style = 3)
   for (i in seq_along(functienamen)) {
-    if (interactive()) cat("\rget function calls",
-      format((100L * i) %/% length(functienamen), width = 4L), "%")
+    if (showprogress) setTxtProgressBar(pb, i / length(functienamen))
     f <- functienamen[i]
     calls <- dev_function_calls(
       parsedfiles[[functieparsed[f]]],
@@ -72,7 +75,7 @@ dev_call_info <- function(map) {
       }
     }
   }
-  if (interactive()) cat("\n")
+  if (showprogress) close(pb)
   for (i in seq_along(alles)) {
     f <- alles[i]
     if (is.null(listcalls[[f]])) {
@@ -88,6 +91,8 @@ dev_call_info <- function(map) {
   )
 }
 dev_indir_xrefs <- function(xrefs) {
+  showprogress <- interactive() && !getOption("quiet", FALSE)
+  if (showprogress) pb <- txtProgressBar(style = 3)
   dir_xrefs <- lapply(xrefs, function(f) {
     a <- unlist(strsplit(f, "|", TRUE))
     unique(a)
@@ -103,14 +108,22 @@ dev_indir_xrefs <- function(xrefs) {
     }
     unique(cl)
   }
-  all.xrefs <- lapply(names(dir_xrefs), function(x) add_xref(x, x))
+  tota <- length(dir_xrefs)
+  all.xrefs <- lapply(seq_along(dir_xrefs), function(j) {
+    if (showprogress) setTxtProgressBar(pb, j / tota)
+    x <- names(dir_xrefs)[j]
+    add_xref(x, x)
+  })
   indir_xrefs <- lapply(seq_along(xrefs), function(j) {
     setdiff(all.xrefs[[j]], c(names(xrefs)[j], dir_xrefs[[j]]))
   })
   names(indir_xrefs) <- names(xrefs)
+  if (showprogress) close(pb)
   indir_xrefs
 }
 dev_indir_calls <- function(calls) {
+  showprogress <- interactive() && !getOption("quiet", FALSE)
+  if (showprogress) pb <- txtProgressBar(style = 3)
   add_call <- function(x, curlist) {
     dxx <- calls[[x]]
     if (length(dxx) == 0L || all(dxx == x)) {
@@ -122,13 +135,19 @@ dev_indir_calls <- function(calls) {
     }
     unique(cl)
   }
-  all.calls <- lapply(names(calls), function(x) add_call(x, x))
+  tota <- length(calls)
+  all.calls <- lapply(seq_along(calls), function(j) {
+    if (showprogress) setTxtProgressBar(pb, j / tota)
+    x <- names(calls)[j]
+    add_call(x, x)
+  })
   indir_calls <- lapply(seq_along(calls), function(j) {
     setdiff(all.calls[[j]], c(names(calls)[j], calls[[j]]))
   })
   names(indir_calls) <- names(calls)
+  if (showprogress) close(pb)
   indir_calls
-}
+  }
 #' Create a call tree for a function in the r files of a package
 #'
 #' This function creates a call tree for a function
@@ -453,6 +472,7 @@ calltree_html <- function(map, dest = NULL) {
     html <- TRUE
     stopifnot(is.character(dest), length(dest) == 1L)
   }
+  showprogress <- interactive() && !getOption("quiet", FALSE)
   return_value <- list()
   pkgname <- basename(normalizePath(map))
   exports <- getNamespaceExports(pkgname)
@@ -483,7 +503,9 @@ calltree_html <- function(map, dest = NULL) {
   synoniemen <- tmp$synoniemen
   listcalls <- tmp$calls
   xref <- tmp$xrefs
+  cat("get indirect xrefs\n")
   indir_xrefs <- dev_indir_xrefs(xref)
+  cat("get indirect calls\n")
   indir_calls <- dev_indir_calls(listcalls)
   if (html && !dir.exists(dest)) {
     dir.create(dest)
@@ -493,10 +515,10 @@ calltree_html <- function(map, dest = NULL) {
   alles <- sort(c(functienamen, synoniemnamen))
   functiecount <- length(functienamen)
   allescount <- length(alles)
-  if (interactive()) cat("\n")
+  cat("get functions complexity\n")
+  if (showprogress) pb <- txtProgressBar(style = 3)
   for (i in seq_along(functienamen)) {
-    if (interactive()) cat("\rget functions complexity",
-      format((100L * i) %/% allescount, width = 4L), "%")
+    if (showprogress) setTxtProgressBar(pb, i / allescount)
     f <- functienamen[i]
     cycval <- cyclocomp(ns[[f]])
     devfunc <- new("dev_func",
@@ -518,8 +540,7 @@ calltree_html <- function(map, dest = NULL) {
   }
   cycval <- 0L
   for (i in seq_along(synoniemnamen)) {
-    if (interactive()) cat("\rget functions complexity",
-      format((100L * (i + functiecount)) %/% allescount, width = 4L), "%")
+    if (showprogress) setTxtProgressBar(pb, (i + functiecount) / allescount)
     f <- synoniemnamen[i]
     funccall <- listcalls[[synoniemen[[f]]$name]]
     if (is.null(funccall)) funccall <- character(0)
@@ -539,7 +560,7 @@ calltree_html <- function(map, dest = NULL) {
     if (html)
       dev_write_function_html(pkgname, devfunc, indir_xrefs, indir_calls, namestar, dest)
   }
-  if (interactive()) cat("\n")
+  if (showprogress) close(pb)
   if (!html) return(return_value)
   ################## write index.html #######################
   sink(paste0(dest, "/index.html"))
