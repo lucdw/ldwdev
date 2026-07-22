@@ -1,5 +1,5 @@
 #' @importFrom cyclocomp cyclocomp
-#' @importFrom utils packageVersion
+#' @importFrom utils packageVersion capture.output
 #' @importFrom methods new
 #' @importFrom utils setTxtProgressBar txtProgressBar
 dev_hash <- function(x) {
@@ -95,64 +95,6 @@ dev_call_info <- function(map, ns) {
     xrefs = xref
   )
 }
-dev_indir_xrefs <- function(xrefs) {
-  showprogress <- interactive() && !getOption("quiet", FALSE)
-  if (showprogress) pb <- txtProgressBar(style = 3)
-  dir_xrefs <- lapply(xrefs, function(f) {
-    a <- unlist(strsplit(f, "|", TRUE))
-    unique(a)
-  })
-  add_xref <- function(x, curlist) {
-    dxx <- dir_xrefs[[x]]
-    if (length(dxx) == 0L || all(dxx == x)) {
-      return(curlist)
-    }
-    cl <- unique(c(curlist, dxx))
-    for (xx in setdiff(dxx, curlist)) {
-      cl <- add_xref(xx, cl)
-    }
-    unique(cl)
-  }
-  tota <- length(dir_xrefs)
-  all.xrefs <- lapply(seq_along(dir_xrefs), function(j) {
-    if (showprogress) setTxtProgressBar(pb, j / tota)
-    x <- names(dir_xrefs)[j]
-    add_xref(x, x)
-  })
-  indir_xrefs <- lapply(seq_along(xrefs), function(j) {
-    setdiff(all.xrefs[[j]], c(names(xrefs)[j], dir_xrefs[[j]]))
-  })
-  names(indir_xrefs) <- names(xrefs)
-  if (showprogress) close(pb)
-  indir_xrefs
-}
-dev_indir_calls <- function(calls) {
-  showprogress <- interactive() && !getOption("quiet", FALSE)
-  if (showprogress) pb <- txtProgressBar(style = 3)
-  add_call <- function(x, curlist) {
-    dxx <- calls[[x]]
-    if (length(dxx) == 0L || all(dxx == x)) {
-      return(curlist)
-    }
-    cl <- unique(c(curlist, dxx))
-    for (xx in setdiff(dxx, curlist)) {
-      cl <- add_call(xx, cl)
-    }
-    unique(cl)
-  }
-  tota <- length(calls)
-  all.calls <- lapply(seq_along(calls), function(j) {
-    if (showprogress) setTxtProgressBar(pb, j / tota)
-    x <- names(calls)[j]
-    add_call(x, x)
-  })
-  indir_calls <- lapply(seq_along(calls), function(j) {
-    setdiff(all.calls[[j]], c(names(calls)[j], calls[[j]]))
-  })
-  names(indir_calls) <- names(calls)
-  if (showprogress) close(pb)
-  indir_calls
-  }
 #' Create a call tree for a function in the r files of a package
 #'
 #' This function creates a call tree for a function
@@ -278,170 +220,6 @@ print.calltree <- summary.calltree <- function(x, ...) {
   }
 }
 
-dev_write_function_html <- function(pkgname, dev_func_obj,
-                                    indir_xrefs, indir_calls, namestar, dest) {
-sink(paste0(dest, "/", dev_htmlnaam(dev_func_obj@name)))
-cat(
-"<!DOCTYPE html>
-<html>
-<head>
-<title>",
-      pkgname,
-      " ",
-      dev_func_obj@name,
-      "</title>
-<style>
-h1 {
- color: #1e64c8;
-}
-p.lijst {
- margin-top: 0.5em;
- margin-bottom: 0.5em;
-}
-p.lijst:nth-child(even) {
-  background-color: #dddddd;
-}
-div.mycontainer {
-  width:99%;
-  overflow:auto;
-}
-div.mycontainer div {
-  width:23%;
-  float:left;
-  border-style: solid;
-  border-width: 5px;
-  margin: 4px;
-}
-</style>
-</head>
-<body>
-<h1>",
-    dev_func_obj@name,
-    "</h1><p>defined on line ", dev_func_obj@defined_at_lines[1L],
-    " of ", dev_func_obj@defined_in,
-    ", ", dev_func_obj@defined_at_lines[2],
-    " lines",
-    "</p>\n"
-)
-  if (length(dev_func_obj@synonym_of) > 0L) {
-    cat(
-    "<p>This function is the same as <a href=\"",
-    dev_htmlnaam(dev_func_obj@synonym_of),
-    "\">",
-    dev_func_obj@synonym_of,
-    "</a></p>\n",
-    sep = ""
-  )
-  }
-cat("<div class=\"mycontainer\">
-<div style=\"border-color:#dddd00;\">
-<h2>Calls functions</h2>
-"
-)
-if (length(dev_func_obj@calls) > 0L) {
-  for (j in seq_along(dev_func_obj@calls)) {
-    cat(
-      "<p class='lijst'><a href='",
-      dev_htmlnaam(dev_func_obj@calls[j]),
-      "'>",
-      namestar(dev_func_obj@calls[j]),
-      "</a></p>\n",
-      sep = ""
-    )
-  }
-} else {
-  cat("none")
-}
-cat(
-  "</div>
-<div style=\"border-color:#ffff00;\">
-<h2>Calls indirectly functions</h2>
-"
-)
-if (is.null(indir_calls[[dev_func_obj@name]]) ||
-  length(indir_calls[[dev_func_obj@name]]) == 0L) {
-  cat("none")
-} else {
-  for (j in seq_along(indir_calls[[dev_func_obj@name]])) {
-    calledone <- indir_calls[[dev_func_obj@name]][j]
-    cat(
-      "<p class='lijst'><a href='",
-      dev_htmlnaam(calledone),
-      "'>",
-      namestar(calledone),
-      "</a></p>\n",
-      sep = ""
-    )
-  }
-}
-cat(
-  "</div>
-<div style=\"border-color:#00dddd;\">
-<h2>Called by</h2>
-"
-)
-if (is.null(dev_func_obj@called_by)) {
-  cat("none")
-} else {
-  for (j in seq_along(dev_func_obj@called_by)) {
-    caller <- dev_func_obj@called_by[j]
-    callers <- strsplit(caller, "|", fixed = TRUE)[[1]]
-    if (length(callers) == 2L) {
-      cat(
-        "<p class='lijst'><a href='",
-        dev_htmlnaam(callers[1]),
-        "'>",
-        callers[1],
-        "</a> via ",
-        "<a href='",
-        dev_htmlnaam(callers[2]),
-        "'>",
-        callers[2],
-        "</a></p>\n",
-        sep = ""
-      )
-    } else {
-      cat(
-        "<p class='lijst'><a href='",
-        dev_htmlnaam(caller),
-        "'>",
-        namestar(caller),
-        "</a></p>\n",
-        sep = ""
-      )
-    }
-  }
-}
-cat(
-  "</div>
-<div style=\"border-color:#00ffff;\">
-<h2>Called indirectly by</h2>
-"
-)
-if (is.null(indir_xrefs[[dev_func_obj@name]]) ||
-  length(indir_xrefs[[dev_func_obj@name]]) == 0L) {
-  cat("none")
-} else {
-  for (j in seq_along(indir_xrefs[[dev_func_obj@name]])) {
-    caller <- indir_xrefs[[dev_func_obj@name]][j]
-    cat(
-      "<p class='lijst'><a href='",
-      dev_htmlnaam(caller),
-      "'>",
-      namestar(caller),
-      "</a></p>\n",
-      sep = ""
-    )
-  }
-}
-cat(
-  "</div>
-    </div>
-    </body>\n</html>\n"
-)
-sink()
-}
-
 #' Create a list and html website with functions and calls between them
 #' of a package
 #'
@@ -473,7 +251,6 @@ sink()
 #' @rdname calltree_html
 #' @export
 calltree_html <- function(map, dest = NULL) {
-  htmloudeversie <- FALSE
   if (missing(dest)) {
     html <- FALSE
   } else {
@@ -511,10 +288,6 @@ calltree_html <- function(map, dest = NULL) {
   synoniemen <- tmp$synoniemen
   listcalls <- tmp$calls
   xref <- tmp$xrefs
-  cat("get indirect xrefs\n")
-  indir_xrefs <- dev_indir_xrefs(xref)
-  cat("get indirect calls\n")
-  indir_calls <- dev_indir_calls(listcalls)
   if (html && !dir.exists(dest)) {
     dir.create(dest)
   }
@@ -543,8 +316,6 @@ calltree_html <- function(map, dest = NULL) {
     rval1 <- list(devfunc)
     names(rval1) <- f
     return_value <- c(return_value, rval1)
-    if (html && htmloudeversie)
-      dev_write_function_html(pkgname, devfunc, indir_xrefs, indir_calls, namestar, dest)
   }
   cycval <- 0L
   for (i in seq_along(synoniemnamen)) {
@@ -565,177 +336,39 @@ calltree_html <- function(map, dest = NULL) {
     rval1 <- list(devfunc)
     names(rval1) <- f
     return_value <- c(return_value, rval1)
-    if (html && htmloudeversie)
-      dev_write_function_html(pkgname, devfunc, indir_xrefs, indir_calls, namestar, dest)
   }
   if (showprogress) close(pb)
-  if (!html) return(return_value)
-  ################## new version ############################
-  if (!htmloudeversie) {
+  if (html) {
     writeLines(index_html, paste0(dest, "/index.html"))
     writeLines(onefunc_html, paste0(dest, "/onefunc.html"))
     writeLines(ldwdev0_js, paste0(dest, "/ldwdev0.js"))
-    sink(paste0(dest, "/ldwdev.js"))
-    cat("const Functies = new Map([\n")
-    for (i in seq_along(alles)) {
-      synoniem <- 0
-      devfunc <- return_value[[alles[i]]]
-      if (length(devfunc@synonym_of)) synoniem <- which(alles == devfunc@synonym_of)
-      cat(
-        '[', i, ', new Functie(', i, ', "', alles[i], '", ',
-        synoniem, ', "', devfunc@defined_in, '", ', 
-        devfunc@defined_at_lines[1L], ', ', devfunc@defined_at_lines[2L], ', ',
-        if (devfunc@exported) 'true' else 'false', ', [',
-        paste(match(devfunc@calls, alles), collapse = ","),
-        '], [',
-        paste(match(sub("\\|.*$", "", devfunc@called_by), alles), collapse = ","),
-        '], ', devfunc@complexity, ')]', sep = "")
-      if (i == length(alles)) cat('\n') else cat(',\n')
-    }
-    cat("]);\n")
-    cat('const PkgInfo = {name: "', pkgname, '", version: "',
-        as.character(packageVersion(pkgname)),
-        '", date: "',
-        as.character(Sys.Date()),
-        '"}\n',
-        sep = ""
-    )
-    sink()
-  } else {
-  ################## write index.html #######################
-  sink(paste0(dest, "/index.html"))
-  cat(
-    "<!DOCTYPE html>
-<html>
-<head>
-<title>",
-    pkgname,
-    " functions calltree</title>
-<style>
-h1 {
- color: #1e64C8;
-}
-table {
-  font-family: arial, sans-serif;
-  border-collapse: collapse;
-  width: 100%;
-}
-
-td, th {
-  border: 1px solid #dddddd;
-  text-align: left;
-  padding: 6px;
-}
-
-tr:nth-child(even) {
-  background-color: #dddddd;
-}
-</style>
-      </head>
-      <body>
-      <h1>Functions in ",
-    pkgname,
-    " version ",
-    as.character(packageVersion(pkgname)),
-    " - ",
-    as.character(Sys.Date()),
-    ".</h1><p>Click on a column header to sort on that column.
-    <span id='sorting' style='background-color: green; visibility: hidden;'>
-    s o r t i n g</span></p>
-\n<table id='myTable'>\n<tr>
-<th onclick='sortTable(0)'>Name (*=exported)</th>
-<th onclick='sortTable(1)'># calls</th>,
-<th onclick='sortTable(2)'># called by</th>
-<th onclick='sortTable(3)'>synonym of</th>
-<th onclick='sortTable(4)'>defined in</th>
-<th onclick='sortTable(5)'>at line</th>
-<th onclick='sortTable(6)'># lines</th>
-<th onclick='sortTable(7)'>complexity</th>
-</tr>\n",
-    sep = ""
-  )
-  for (i in seq_along(alles)) {
-    cat(
-      "<tr><td><a href=\"",
-      dev_htmlnaam(alles[i]),
-      "\", target=\"_blank\">",
-      namestar(alles[i]),
-      sep = ""
-    )
-    cat(
-      "</a></td><td>",
-      length(listcalls[[alles[i]]]),
-      "</td><td>",
-      length(xref[[alles[i]]]),
-      "</td><td>",
-      sep = ""
-    )
-    if (any(alles[i] == synoniemnamen)) {
-      cat(
-        synoniemen[[alles[i]]]$name,
-        "</td><td>",
-        synoniemen[[alles[i]]]$src,
-        "</td><td>",
-        synoniemen[[alles[i]]]$def1[1],
-        "</td><td></td><td>"
+    capture.output({
+      cat("const Functies = new Map([\n")
+      for (i in seq_along(alles)) {
+        synoniem <- 0
+        devfunc <- return_value[[alles[i]]]
+        if (length(devfunc@synonym_of)) synoniem <- which(alles == devfunc@synonym_of)
+        cat(
+          '[', i, ', new Functie(', i, ', "', alles[i], '", ',
+          synoniem, ', "', devfunc@defined_in, '", ', 
+          devfunc@defined_at_lines[1L], ', ', devfunc@defined_at_lines[2L], ', ',
+          if (devfunc@exported) 'true' else 'false', ', [',
+          paste(match(devfunc@calls, alles), collapse = ","),
+          '], [',
+          paste(match(sub("\\|.*$", "", devfunc@called_by), alles), collapse = ","),
+          '], ', devfunc@complexity, ')]', sep = "")
+        if (i == length(alles)) cat('\n') else cat(',\n')
+      }
+      cat("]);\n")
+      cat('const PkgInfo = {name: "', pkgname, '", version: "',
+          as.character(packageVersion(pkgname)),
+          '", date: "',
+          as.character(Sys.Date()),
+          '"}\n',
+          sep = ""
       )
-    } else {
-      cat(
-        "</td><td>",
-        functies[[alles[i]]]$src,
-        "</td><td>",
-        functies[[alles[i]]]$def1[1],
-        "</td><td>",
-        functies[[alles[i]]]$def2[3] + 1 - functies[[alles[i]]]$def1[1],
-        "</td><td>"
-      )
-      cat(cyclocomp(ns[[alles[i]]]))
-    }
-    cat("</td></tr>\n")
+    }, file = paste0(dest, "/ldwdev.js"))
   }
-  cat("</table>\n")
-  cat(
-    "
-<script>
-columnIndex = 0;
-function sortTable(column = 0) {
-  document.getElementById('sorting').style.visibility='visible';
-  columnIndex = column;
-  window.setTimeout(sortTable2, 250);
-}
-lastsort = -1;
-lastasc = false;
-function sortTable2() {
-   const table = document.getElementById('myTable');
-   const rows = Array.from(table.rows).slice(1); // Exclude header row
-   ascending = true;
-   if (lastsort == columnIndex) ascending = !lastasc;
-   rows.sort((a, b) => {
-       const cellA = a.cells[columnIndex].innerText.toLowerCase();
-       const cellB = b.cells[columnIndex].innerText.toLowerCase();
-       cellAnum = Number(cellA)
-       cellBnum = Number(cellB)
-       if (Number.isNaN(cellAnum) || Number.isNaN(cellBnum)) {
-          if (cellA < cellB) return ascending ? -1 : 1;
-          if (cellA > cellB) return ascending ? 1 : -1;
-          return 0;
-       } else {
-          if (cellAnum < cellBnum) return ascending ? -1 : 1;
-          if (cellAnum > cellBnum) return ascending ? 1 : -1;
-          return 0;
-       }
-   });
-   rows.forEach(row => table.appendChild(row)); // Reorder rows
-   lastsort = columnIndex;
-   lastasc = ascending;
-  document.getElementById('sorting').style.visibility='hidden';
-}
-</script>
-    "
-  )
-  cat("</body>\n</html>\n")
-  sink()
-}
   browseURL(paste0(dest, "/index.html"))
   return_value
-}
+  }
