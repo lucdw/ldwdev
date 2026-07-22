@@ -2,21 +2,41 @@
 #' @importFrom utils packageVersion capture.output
 #' @importFrom methods new
 #' @importFrom utils setTxtProgressBar txtProgressBar
-dev_hash <- function(x) {
-  p <- 257L
-  m <- 1000033L
-  hash_value <- 551017L
-  p_pow <- 1L
-  tmp <- as.integer(charToRaw(x))
-  for (j in tmp) {
-    hash_value <- (hash_value + (j + 1L) * p_pow) %% m
-    p_pow <- (p_pow * p) %% m
+dev_function_calls <- function(parseddata, range) {
+  stopifnot(!missing(range), length(range) == 4, is.integer(range))
+  frompos <- 10000L * range[1] + range[2]
+  topos <- 10000L * range[3] + range[4]
+  fcrows <- which(
+    parseddata$token == "SYMBOL_FUNCTION_CALL" &
+    10000L * parseddata$line1 + parseddata$col1 >= frompos &
+    10000L * parseddata$line2 + parseddata$col2 <= topos
+  )
+  for (i in seq_len(nrow(parseddata))) {
+    # symbols which are no slot or list element
+    if (parseddata$token[i] == "SYMBOL" && parseddata$text[i - 1L] != "$" &&
+      parseddata$text[i - 1L] != "@" && parseddata$text[i + 1] != "=" &&
+      parseddata$token[i + 1L] != "LEFT_ASSIGN" &&
+      10000L * parseddata$line1[i] + parseddata$col1[i] >= frompos &&
+      10000L * parseddata$line2[i] + parseddata$col2[i] <= topos
+    ) fcrows <- c(fcrows, i)
   }
-  hash_value
+  docalls <- which(
+    parseddata$token == "SYMBOL_FUNCTION_CALL" &
+      10000L * parseddata$line1 + parseddata$col1 >= frompos &
+      10000L * parseddata$line2 + parseddata$col2 <= topos &
+      parseddata$text == "do.call"
+  )
+  docallfuncs <- character(0)
+  for (j in docalls) {
+    if (
+      parseddata$token[j + 3] == "STR_CONST"
+    ) {
+      docallfuncs <- c(docallfuncs, parseddata$text[j + 3])
+    }
+  }
+  sort(unique(c(docallfuncs, parseddata$text[fcrows])))
 }
-dev_htmlnaam <- function(x) {
-  paste0("f", dev_hash(x), ".html")
-}
+
 dev_call_info <- function(map, ns) {
   stopifnot(is.character(map), length(map) == 1L)
   showprogress <- interactive() && !getOption("quiet", FALSE)
@@ -262,12 +282,6 @@ calltree_html <- function(map, dest = NULL) {
   pkgname <- basename(normalizePath(map))
   exports <- getNamespaceExports(pkgname)
   ns <- getNamespace(pkgname)
-  namestar <- function(a) {
-    if (any(exports == a)) {
-      return(paste(a, "*"))
-    }
-    a
-  }
   xxx <- readLines(paste0(map, "/NAMESPACE"))
   s3 <- grep("^ *S3method\\(.*, .*\\) *$", xxx, value = TRUE)
   if (length(s3) > 0) {
@@ -347,15 +361,19 @@ calltree_html <- function(map, dest = NULL) {
       for (i in seq_along(alles)) {
         synoniem <- 0
         devfunc <- return_value[[alles[i]]]
-        if (length(devfunc@synonym_of)) synoniem <- which(alles == devfunc@synonym_of)
+        if (length(devfunc@synonym_of)) {
+          synoniem <- which(alles == devfunc@synonym_of)
+        }
         cat(
           '[', i, ', new Functie(', i, ', "', alles[i], '", ',
-          synoniem, ', "', devfunc@defined_in, '", ', 
-          devfunc@defined_at_lines[1L], ', ', devfunc@defined_at_lines[2L], ', ',
+          synoniem, ', "', devfunc@defined_in, '", ',
+          devfunc@defined_at_lines[1L], ', ',
+          devfunc@defined_at_lines[2L], ', ',
           if (devfunc@exported) 'true' else 'false', ', [',
           paste(match(devfunc@calls, alles), collapse = ","),
           '], [',
-          paste(match(sub("\\|.*$", "", devfunc@called_by), alles), collapse = ","),
+          paste(match(sub("\\|.*$", "", devfunc@called_by), alles),
+                                                    collapse = ","),
           '], ', devfunc@complexity, ')]', sep = "")
         if (i == length(alles)) cat('\n') else cat(',\n')
       }

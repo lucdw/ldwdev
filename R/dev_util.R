@@ -123,40 +123,6 @@ dev_toplevel <- function(parseddata) {
   }
   list(functies = functies, synoniemen = synoniemen)
 }
-dev_function_calls <- function(parseddata, range) {
-  stopifnot(!missing(range), length(range) == 4, is.integer(range))
-  frompos <- 10000L * range[1] + range[2]
-  topos <- 10000L * range[3] + range[4]
-  fcrows <- which(
-    parseddata$token == "SYMBOL_FUNCTION_CALL" &
-    10000L * parseddata$line1 + parseddata$col1 >= frompos &
-    10000L * parseddata$line2 + parseddata$col2 <= topos
-  )
-  for (i in seq_len(nrow(parseddata))) {
-    # symbols which are no slot or list element
-    if (parseddata$token[i] == "SYMBOL" && parseddata$text[i - 1L] != "$" &&
-      parseddata$text[i - 1L] != "@" && parseddata$text[i + 1] != "=" &&
-      parseddata$token[i + 1L] != "LEFT_ASSIGN" &&
-      10000L * parseddata$line1[i] + parseddata$col1[i] >= frompos &&
-      10000L * parseddata$line2[i] + parseddata$col2[i] <= topos
-    ) fcrows <- c(fcrows, i)
-  }
-  docalls <- which(
-    parseddata$token == "SYMBOL_FUNCTION_CALL" &
-      10000L * parseddata$line1 + parseddata$col1 >= frompos &
-      10000L * parseddata$line2 + parseddata$col2 <= topos &
-      parseddata$text == "do.call"
-  )
-  docallfuncs <- character(0)
-  for (j in docalls) {
-    if (
-      parseddata$token[j + 3] == "STR_CONST"
-    ) {
-      docallfuncs <- c(docallfuncs, parseddata$text[j + 3])
-    }
-  }
-  sort(unique(c(docallfuncs, parseddata$text[fcrows])))
-}
 openPDF <- function(f) {
   os <- .Platform$OS.type
   if (os=="windows")
