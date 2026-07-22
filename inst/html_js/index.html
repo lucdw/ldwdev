@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>functions calltree</title>
+<style>
+h1 {
+ color: #1e64C8;
+}
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 6px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+</style>
+<script src="ldwdev0.js"></script>
+<script src="ldwdev.js"></script>
+</head>
+<body>
+<h1 id="title">Functions</h1>
+<p>Click on a column header to sort on that column.
+<span id='sorting' style='background-color: green; visibility: hidden;'>
+    s o r t i n g</span></p>
+<table id='myTable'>
+</table>
+<script>
+document.title = `${PkgInfo.name} functions calltree`;
+let nbfunctions = Functies.size;
+let nbsynonyms = 0;
+Functies.forEach((func, key) => {
+  if (func.synonym != 0) nbsynonyms++;
+});
+const titelblok = document.getElementById("title");
+titelblok.innerHTML = `Functions in ${PkgInfo.name} version ${PkgInfo.version} - ${PkgInfo.date};
+ ${nbfunctions} functions, of which ${nbsynonyms} are synonyms.`;
+let tabelinner = `
+<tr>
+<th onclick='sortTable(0)'>Name (*=exported)</th>
+<th onclick='sortTable(1)'># calls</th>,
+<th onclick='sortTable(2)'># called by</th>
+<th onclick='sortTable(3)'>synonym of</th>
+<th onclick='sortTable(4)'>defined in</th>
+<th onclick='sortTable(5)'>at line</th>
+<th onclick='sortTable(6)'># lines</th>
+<th onclick='sortTable(7)'>complexity</th>
+</tr>
+`;
+Functies.forEach((func, key) => {
+  let syn = func.synonym;
+  if (syn != 0) {
+    synnaam = Functies.get(syn).name;
+    syn = `<a href="onefunc.html?f=${syn}", target="_blank">${synnaam}</a>`;
+  } else {
+    syn = "";
+  }
+  tabelinner += `<tr>
+  <td><a href="onefunc.html?f=${key}", target="_blank">${func.name}</a></td>
+  <td>${func.nbcalls}</td>
+  <td>${func.nbcalledby}</td>
+  <td>${syn}</td>
+  <td>${func.definedin}</td>
+  <td>${func.atline}</td>
+  <td>${func.lines}</td>
+  <td>${func.complexity}</td>
+  </tr>`;
+});
+const table = document.getElementById('myTable');
+table.innerHTML = tabelinner;
+let columnIndex = 0;
+function sortTable(column = 0) {
+  document.getElementById('sorting').style.visibility='visible';
+  columnIndex = column;
+  window.setTimeout(sortTable2, 250);
+}
+let lastsort = -1;
+let lastasc = false;
+function sortTable2() {
+   //const table = document.getElementById('myTable');
+   const rows = Array.from(table.rows).slice(1); // Exclude header row
+   let ascending = true;
+   if (lastsort == columnIndex) ascending = !lastasc;
+   rows.sort((a, b) => {
+       const cellA = a.cells[columnIndex].innerText.toLowerCase();
+       const cellB = b.cells[columnIndex].innerText.toLowerCase();
+       let cellAnum = Number(cellA)
+       cellBnum = Number(cellB)
+       if (Number.isNaN(cellAnum) || Number.isNaN(cellBnum)) {
+          if (cellA < cellB) return ascending ? -1 : 1;
+          if (cellA > cellB) return ascending ? 1 : -1;
+          return 0;
+       } else {
+          if (cellAnum < cellBnum) return ascending ? -1 : 1;
+          if (cellAnum > cellBnum) return ascending ? 1 : -1;
+          return 0;
+       }
+   });
+   rows.forEach(row => table.appendChild(row)); // Reorder rows
+   lastsort = columnIndex;
+   lastasc = ascending;
+  document.getElementById('sorting').style.visibility='hidden';
+}
+</script>
+    </body>
+</html>

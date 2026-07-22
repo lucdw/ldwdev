@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>lavaan function detail</title>
+<style>
+h1 {
+ color: #1e64c8;
+}
+div.mycontainer {
+  width:99%;
+  overflow:auto;
+}
+div.mycontainer div {
+  width:23%;
+  float:left;
+  border-style: solid;
+  border-width: 5px;
+  margin: 4px;
+}
+</style>
+<script src="ldwdev0.js"></script>
+<script src="ldwdev.js"></script>
+</head>
+<body>
+<div id="titleblock"></div>
+<div class="mycontainer">
+  <div id="callsblock", style="border-color:#dddd00;">
+  </div>
+  <div id="callsindirectlyblock" style="border-color:#ffff00;">
+  </div>
+  <div id="calledblock" style="border-color:#00dddd;">
+  </div>
+  <div id="calledindirectlyblock" style="border-color:#00ffff;">
+  </div>
+</div>
+<script>
+  const searchParams = new URLSearchParams(window.location.search);
+  let f = Number(searchParams.get('f')); // id of function
+  function ShowFunc(id) {
+    let func = Functies.get(id);
+    document.title = "lavaan function detail - " + func.naam;
+    document.getElementById("titleblock").innerHTML = `<h1> ${func.name} </h1><p>defined on line  ${func.atline}  of  ${func.definedin} ,  ${func.lines}  lines </p>`;
+    let callshtml = "";
+    let calledbyhtml = "";
+    let callindirectlyhtml = "";
+    let calledbyindirectlyhtml = "";
+    func.calls.forEach((c) => {
+      let calledfunc = Functies.get(c);
+      callshtml += `<button onclick="ShowFunc(${c})">${calledfunc.naam}</button><br />`;
+    });
+    func.calledby.forEach((c) => {
+      let callingfunc = Functies.get(c);
+      calledbyhtml += `<button onclick="ShowFunc(${c})">${callingfunc.naam}</button><br />`;
+    });
+    func.calledbyindirect(Functies).forEach((c) => {
+      let calledbyindfunc = Functies.get(c);
+      calledbyindirectlyhtml += `<button onclick="ShowFunc(${c})">${calledbyindfunc.naam}</button><br />`;
+    });
+    func.callsindirect(Functies).forEach((c) => {
+      let calledindfunc = Functies.get(c);
+      callindirectlyhtml += `<button onclick="ShowFunc(${c})">${calledindfunc.naam}</button><br />`;
+    });
+    document.getElementById("callsblock").innerHTML = `<h2>Calls functions</h2>${callshtml}`;
+    document.getElementById("callsindirectlyblock").innerHTML = `<h2>Calls indirectly functions</h2>${callindirectlyhtml}`;
+    document.getElementById("calledblock").innerHTML = `<h2>Called by</h2>${calledbyhtml}`;
+    document.getElementById("calledindirectlyblock").innerHTML = `<h2>Called indirectly by</h2>${calledbyindirectlyhtml}`;
+  }
+ ShowFunc(f);  
+</script>
+</body>
+</html>

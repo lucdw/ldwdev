@@ -1,6 +1,7 @@
 #' @importFrom cyclocomp cyclocomp
 #' @importFrom utils packageVersion
 #' @importFrom methods new
+#' @importFrom utils setTxtProgressBar txtProgressBar
 dev_hash <- function(x) {
   p <- 257L
   m <- 1000033L
@@ -16,7 +17,7 @@ dev_hash <- function(x) {
 dev_htmlnaam <- function(x) {
   paste0("f", dev_hash(x), ".html")
 }
-dev_call_info <- function(map) {
+dev_call_info <- function(map, ns) {
   stopifnot(is.character(map), length(map) == 1L)
   showprogress <- interactive() && !getOption("quiet", FALSE)
   files <- dir(map, pattern = "\\.[rR]$")
@@ -49,6 +50,10 @@ dev_call_info <- function(map) {
   if (showprogress) close(pb)
   functienamen <- names(functies)
   synoniemnamen <- names(synoniemen)
+  functienamen <- functienamen[functienamen %in% ls(ns)]
+  synoniemnamen <- synoniemnamen[synoniemnamen %in% ls(ns)]
+  functies <- functies[functienamen]
+  synoniemen <- synoniemen[synoniemnamen]
   alles <- sort(c(functienamen, synoniemnamen))
   xref <- list()
   listcalls <- list()
@@ -185,7 +190,9 @@ dev_indir_calls <- function(calls) {
 get_func_calltree <- function(map, func) {
   stopifnot(is.character(map), length(map) == 1)
   stopifnot(is.character(func), length(func) > 0)
-  tmp <- dev_call_info(map)
+  pkgname <- basename(normalizePath(map))
+  ns <- getNamespace(pkgname)
+  tmp <- dev_call_info(map, ns)
   functies <- tmp$functies
   synoniemen <- tmp$synoniemen
   listcalls <- tmp$calls
@@ -466,6 +473,7 @@ sink()
 #' @rdname calltree_html
 #' @export
 calltree_html <- function(map, dest = NULL) {
+  htmloudeversie <- FALSE
   if (missing(dest)) {
     html <- FALSE
   } else {
@@ -498,7 +506,7 @@ calltree_html <- function(map, dest = NULL) {
     )
     eval(str2expression(s3))
   }
-  tmp <- dev_call_info(map)
+  tmp <- dev_call_info(map, ns)
   functies <- tmp$functies
   synoniemen <- tmp$synoniemen
   listcalls <- tmp$calls
@@ -535,7 +543,7 @@ calltree_html <- function(map, dest = NULL) {
     rval1 <- list(devfunc)
     names(rval1) <- f
     return_value <- c(return_value, rval1)
-    if (html)
+    if (html && htmloudeversie)
       dev_write_function_html(pkgname, devfunc, indir_xrefs, indir_calls, namestar, dest)
   }
   cycval <- 0L
@@ -557,11 +565,43 @@ calltree_html <- function(map, dest = NULL) {
     rval1 <- list(devfunc)
     names(rval1) <- f
     return_value <- c(return_value, rval1)
-    if (html)
+    if (html && htmloudeversie)
       dev_write_function_html(pkgname, devfunc, indir_xrefs, indir_calls, namestar, dest)
   }
   if (showprogress) close(pb)
   if (!html) return(return_value)
+  ################## new version ############################
+  if (!htmloudeversie) {
+    writeLines(index_html, paste0(dest, "/index.html"))
+    writeLines(onefunc_html, paste0(dest, "/onefunc.html"))
+    writeLines(ldwdev0_js, paste0(dest, "/ldwdev0.js"))
+    sink(paste0(dest, "/ldwdev.js"))
+    cat("const Functies = new Map([\n")
+    for (i in seq_along(alles)) {
+      synoniem <- 0
+      devfunc <- return_value[[alles[i]]]
+      if (length(devfunc@synonym_of)) synoniem <- which(alles == devfunc@synonym_of)
+      cat(
+        '[', i, ', new Functie(', i, ', "', alles[i], '", ',
+        synoniem, ', "', devfunc@defined_in, '", ', 
+        devfunc@defined_at_lines[1L], ', ', devfunc@defined_at_lines[2L], ', ',
+        if (devfunc@exported) 'true' else 'false', ', [',
+        paste(match(devfunc@calls, alles), collapse = ","),
+        '], [',
+        paste(match(sub("\\|.*$", "", devfunc@called_by), alles), collapse = ","),
+        '], ', devfunc@complexity, ')]', sep = "")
+      if (i == length(alles)) cat('\n') else cat(',\n')
+    }
+    cat("]);\n")
+    cat('const PkgInfo = {name: "', pkgname, '", version: "',
+        as.character(packageVersion(pkgname)),
+        '", date: "',
+        as.character(Sys.Date()),
+        '"}\n',
+        sep = ""
+    )
+    sink()
+  } else {
   ################## write index.html #######################
   sink(paste0(dest, "/index.html"))
   cat(
@@ -695,6 +735,7 @@ function sortTable2() {
   )
   cat("</body>\n</html>\n")
   sink()
+}
   browseURL(paste0(dest, "/index.html"))
   return_value
 }
