@@ -40,6 +40,8 @@ dev_function_calls <- function(parseddata, range) {
 dev_call_info <- function(map, ns) {
   stopifnot(is.character(map), length(map) == 1L)
   showprogress <- interactive() && !getOption("quiet", FALSE)
+  nsfunc <- sapply(ls(ns), \(x) is.function(ns[[x]]))
+  nsfunctions <- ls(ns)[nsfunc]
   files <- dir(map, pattern = "\\.[rR]$")
   if (length(files) == 0 && dir.exists(paste0(map, "/R"))) {
     map <- paste0(map, "/R")
@@ -51,44 +53,44 @@ dev_call_info <- function(map, ns) {
   if (map != ".") {
     files <- paste0(map, "/", files)
   }
-  parsedfiles <- lapply(files, function(f) dev_parsed(f))
   synoniemen <- list()
   functies <- list()
-  functieparsed <- integer(0)
+  calls <- list()
+  complexities <- list()
   cat("get R source info\n")
   if (showprogress) pb <- txtProgressBar(style = 3)
-  for (i in seq_along(parsedfiles)) {
-    if (showprogress) setTxtProgressBar(pb, i / length(parsedfiles))
-    parsedfile <- parsedfiles[[i]]
+  for (i in seq_along(files)) {
+    if (showprogress) setTxtProgressBar(pb, i / length(files))
+    parsedfile <- dev_parsed(files[i])
     tmp <- dev_toplevel(parsedfile)
+    tmp$functies <- tmp$functies[names(tmp$functies) %in% nsfunctions]
+    tmp$synoniemen <- tmp$synoniemen[names(tmp$synoniemen) %in% nsfunctions]
+    for (i in seq_along(tmp$functies)) {
+      f <- tmp$functies[[i]]
+      fname <- names(tmp$functies)[i]
+      calls[[fname]] <- dev_function_calls(
+        parsedfile, f$def2
+      )
+      complexities[[fname]] <- cyclocomp(ns[[fname]])
+    }
+    for (fname in names(tmp$synoniemen)) {
+      complexities[[fname]] <- cyclocomp(ns[[fname]])
+    }
     synoniemen <- c(synoniemen, tmp$synoniemen)
     functies <- c(functies, tmp$functies)
-    pfiles <- rep.int(i, length(tmp$functies))
-    names(pfiles) <- names(tmp$functies)
-    functieparsed <- c(functieparsed, pfiles)
   }
   if (showprogress) close(pb)
-  functienamen <- names(functies)
   synoniemnamen <- names(synoniemen)
-  functienamen <- functienamen[functienamen %in% ls(ns)]
-  synoniemnamen <- synoniemnamen[synoniemnamen %in% ls(ns)]
-  functies <- functies[functienamen]
-  synoniemen <- synoniemen[synoniemnamen]
+  functienamen <- names(functies)
   alles <- sort(c(functienamen, synoniemnamen))
   xref <- list()
   listcalls <- list()
-  cat("get function calls\n")
-  if (showprogress) pb <- txtProgressBar(style = 3)
   for (i in seq_along(functienamen)) {
-    if (showprogress) setTxtProgressBar(pb, i / length(functienamen))
     f <- functienamen[i]
-    calls <- dev_function_calls(
-      parsedfiles[[functieparsed[f]]],
-      functies[[f]]$def2
-    )
-    funcind <- calls %in% alles
+    callsf <- calls[[f]]
+    funcind <- callsf %in% alles
     if (any(funcind)) {
-      funccall <- calls[funcind]
+      funccall <- callsf[funcind]
       listcalls[[f]] <- funccall
       for (calledone in funccall) {
         xref[[calledone]] <- c(xref[[calledone]], f)
@@ -100,7 +102,6 @@ dev_call_info <- function(map, ns) {
       }
     }
   }
-  if (showprogress) close(pb)
   for (i in seq_along(alles)) {
     f <- alles[i]
     if (is.null(listcalls[[f]])) {
@@ -112,7 +113,8 @@ dev_call_info <- function(map, ns) {
     functies = functies,
     synoniemen = synoniemen,
     calls = listcalls,
-    xrefs = xref
+    xrefs = xref,
+    complexities = complexities
   )
 }
 #' Create a call tree for a function in the r files of a package
@@ -277,7 +279,6 @@ calltree_html <- function(map, dest = NULL) {
     html <- TRUE
     stopifnot(is.character(dest), length(dest) == 1L)
   }
-  showprogress <- interactive() && !getOption("quiet", FALSE)
   return_value <- list()
   pkgname <- basename(normalizePath(map))
   exports <- getNamespaceExports(pkgname)
@@ -300,30 +301,23 @@ calltree_html <- function(map, dest = NULL) {
   tmp <- dev_call_info(map, ns)
   functies <- tmp$functies
   synoniemen <- tmp$synoniemen
-  listcalls <- tmp$calls
-  xref <- tmp$xrefs
   if (html && !dir.exists(dest)) {
     dir.create(dest)
   }
   functienamen <- names(functies)
   synoniemnamen <- names(synoniemen)
   alles <- sort(c(functienamen, synoniemnamen))
-  functiecount <- length(functienamen)
-  allescount <- length(alles)
-  cat("get functions complexity\n")
-  if (showprogress) pb <- txtProgressBar(style = 3)
   for (i in seq_along(functienamen)) {
-    if (showprogress) setTxtProgressBar(pb, i / allescount)
     f <- functienamen[i]
-    cycval <- cyclocomp(ns[[f]])
+    cycval <- tmp$complexities[[f]]
     devfunc <- new("dev_func",
       name             = f,
       defined_in       = functies[[f]]$src,
       defined_at_lines = c(functies[[f]]$def1[1], functies[[f]]$def2[3] +
         1L - functies[[f]]$def1[1]),
       exported         = any(exports == f),
-      calls            = listcalls[[f]],
-      called_by        = xref[[f]],
+      calls            = tmp$calls[[f]],
+      called_by        = tmp$xrefs[[f]],
       synonym_of       = character(0L),
       complexity       = cycval
     )
@@ -331,11 +325,10 @@ calltree_html <- function(map, dest = NULL) {
     names(rval1) <- f
     return_value <- c(return_value, rval1)
   }
-  cycval <- 0L
   for (i in seq_along(synoniemnamen)) {
-    if (showprogress) setTxtProgressBar(pb, (i + functiecount) / allescount)
     f <- synoniemnamen[i]
-    funccall <- listcalls[[synoniemen[[f]]$name]]
+    cycval <- tmp$complexities[[f]]
+    funccall <- tmp$calls[[synoniemen[[f]]$name]]
     if (is.null(funccall)) funccall <- character(0)
     devfunc <- new("dev_func",
       name             = f,
@@ -343,7 +336,7 @@ calltree_html <- function(map, dest = NULL) {
       defined_at_lines = c(synoniemen[[f]]$def1[1], 1L),
       exported         = any(exports == f),
       calls            = funccall,
-      called_by        = xref[[f]],
+      called_by        = tmp$xrefs[[f]],
       synonym_of       = synoniemen[[f]]$name,
       complexity       = cycval
     )
@@ -351,7 +344,6 @@ calltree_html <- function(map, dest = NULL) {
     names(rval1) <- f
     return_value <- c(return_value, rval1)
   }
-  if (showprogress) close(pb)
   if (html) {
     writeLines(index_html, paste0(dest, "/index.html"))
     writeLines(onefunc_html, paste0(dest, "/onefunc.html"))
