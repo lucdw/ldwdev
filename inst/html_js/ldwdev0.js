@@ -8,9 +8,9 @@ function Functie(id, naam, synonym, definedin, atline, lines, exported, calls, c
   this.lines = lines;
   this.complexity = complexity;
   this.exported = exported;
-  this.calls = calls;
+  this.calls = calls.sort(function(a, b){return a - b});
   this.nbcalls = calls.length;
-  this.calledby = calledby;
+  this.calledby = calledby.sort(function(a, b){return a - b});
   this.nbcalledby = calledby.length;
   this.name = naam;
   if (exported) this.name = naam + " *";
@@ -26,7 +26,7 @@ function Functie(id, naam, synonym, definedin, atline, lines, exported, calls, c
         result = result.concat(calledbyindirect);
       }
     });
-    return(result);
+    return(result.sort(function(a, b){return a - b}));
   }
   this.calledbyindirect2 = function(allfunc, ignore, directs) {
     let result = [];
@@ -55,7 +55,7 @@ function Functie(id, naam, synonym, definedin, atline, lines, exported, calls, c
         result = result.concat(calledindirect);
       }
     });
-    return(result);
+    return(result.sort(function(a, b){return a - b}));
   }
   this.callsindirect2 = function(allfunc, ignore, directs) {
     let result = [];
