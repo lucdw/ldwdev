@@ -2,6 +2,7 @@
 #' @importFrom utils packageVersion capture.output
 #' @importFrom methods new
 #' @importFrom utils setTxtProgressBar txtProgressBar
+#' @importFrom parallel makeCluster parLapplyLB stopCluster
 dev_function_calls <- function(parseddata, range) {
   stopifnot(!missing(range), length(range) == 4, is.integer(range))
   frompos <- 10000L * range[1] + range[2]
@@ -39,7 +40,7 @@ dev_function_calls <- function(parseddata, range) {
 
 dev_call_info <- function(map, ns) {
   stopifnot(is.character(map), length(map) == 1L)
-  showprogress <- interactive() && !getOption("quiet", FALSE)
+  # showprogress <- interactive() && !getOption("quiet", FALSE)
   nsfunc <- sapply(ls(ns), \(x) is.function(ns[[x]]))
   nsfunctions <- ls(ns)[nsfunc]
   files <- dir(map, pattern = "\\.[rR]$")
@@ -53,14 +54,14 @@ dev_call_info <- function(map, ns) {
   if (map != ".") {
     files <- paste0(map, "/", files)
   }
-  synoniemen <- list()
-  functies <- list()
-  calls <- list()
-  complexities <- list()
   cat("get R source info\n")
-  if (showprogress) pb <- txtProgressBar(style = 3)
-  for (i in seq_along(files)) {
-    if (showprogress) setTxtProgressBar(pb, i / length(files))
+  # if (showprogress) pb <- txtProgressBar(style = 3)
+  cl <- parallel::makeCluster(3L)
+  temp <- parallel::parLapplyLB(cl, seq_along(files),
+                                function(i, files, nsfunctions) {
+    calls <- list()
+    complexities <- list()
+    # if (showprogress) setTxtProgressBar(pb, i / length(files))
     parsedfile <- dev_parsed(files[i])
     tmp <- dev_toplevel(parsedfile)
     tmp$functies <- tmp$functies[names(tmp$functies) %in% nsfunctions]
@@ -76,10 +77,21 @@ dev_call_info <- function(map, ns) {
     for (fname in names(tmp$synoniemen)) {
       complexities[[fname]] <- cyclocomp(ns[[fname]])
     }
-    synoniemen <- c(synoniemen, tmp$synoniemen)
-    functies <- c(functies, tmp$functies)
+    list(synoniemen = tmp$synoniemen, functies = tmp$functies,
+       calls = calls, complexities = complexities)
+  }, files = files, nsfunctions = nsfunctions)
+  # if (showprogress) close(pb)
+  parallel::stopCluster(cl)
+  synoniemen <- list()
+  functies <- list()
+  calls <- list()
+  complexities <- list()
+  for (i in seq_along(temp)) {
+    synoniemen <- c(synoniemen, temp[[i]]$synoniemen)
+    functies <- c(functies, temp[[i]]$functies)
+    calls <- c(calls, temp[[i]]$calls)
+    complexities <- c(complexities, temp[[i]]$complexities)
   }
-  if (showprogress) close(pb)
   synoniemnamen <- names(synoniemen)
   functienamen <- names(functies)
   alles <- sort(c(functienamen, synoniemnamen))

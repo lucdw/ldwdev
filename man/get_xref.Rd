@@ -56,14 +56,16 @@ for (ifile in seq_along(tmp)) {
       if (v@argument) cat(" is an argument of the function.")
       cat("\n    References: ")
       for (ref in v@xrefs) {
-        cat(ref@line, ":", ref@position, if (ref@modified) "*", " | ", sep = "")
+        cat(ref@line, ":", ref@position, if (ref@modified) "*",
+               " | ", sep = "")
       }
       cat("\n")
     }
   }
 }
 cat("*** Note that f1 does not appear as a function defined here!
-*** Note that variable b occurs in function f2 and f4, but with seperate references!
+*** Note that variable b occurs in function f2 and f4,
+    but with seperate references!
 *** Note the anonym function on line 17!")
 unlink(filename)
 

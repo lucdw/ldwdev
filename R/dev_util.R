@@ -123,14 +123,14 @@ dev_toplevel <- function(parseddata) {
   }
   list(functies = functies, synoniemen = synoniemen)
 }
-openPDF <- function(f) {
+open_pdf <- function(f) {
   os <- .Platform$OS.type
-  if (os=="windows")
-    shell.exec(normalizePath(f))
-  else {
-    pdf <- getOption("pdfviewer", default='')
-    if (nchar(pdf)==0)
+  if (os == "windows") {
+    shell.exec(normalizePath(f)) # nolint
+  } else {
+    pdf <- getOption("pdfviewer", default = '')
+    if (nchar(pdf) == 0)
       stop("The 'pdfviewer' option is not set. Use options(pdfviewer=...)")
-    system2(pdf, args=c(f))
+    system2(pdf, args = c(f))
   }
 }

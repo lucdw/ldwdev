@@ -6,8 +6,8 @@
 #' @param files a character vector naming the files to search in
 #'
 #' @return named list with for each file a named list with for each called
-#'  function in the file a named list of named arguments with a tuple line, position
-#'  where this named argument is found
+#'  function in the file a named list of named arguments with a tuple line,
+#'  position where this named argument is found
 #'
 #' @examples
 #' filename <- tempfile(fileext = ".R")
@@ -46,11 +46,13 @@ get_calls <- function(files = "") {
       func <- parseddata$text[parseddata$id == fcalls[i]]
       exprid <- parseddata$parent[parseddata$id == fcalls[i]]
       exprexprid <- parseddata$parent[parseddata$id == exprid]
-      named_args <- parseddata[parseddata$parent %in% exprexprid & parseddata$token == "SYMBOL_SUB", ]
+      named_args <- parseddata[parseddata$parent %in% exprexprid &
+                               parseddata$token == "SYMBOL_SUB", ]
       if (nrow(named_args) > 0L) {
         tmp <- list()
         for (j in seq.int(1L, nrow(named_args))) {
-          tmp[[named_args$text[[j]]]] <- c(named_args$line1[j], named_args$col1[j])
+          tmp[[named_args$text[[j]]]] <- c(named_args$line1[j],
+                                           named_args$col1[j])
         }
         retval1[[func]] <- tmp
       }

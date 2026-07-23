@@ -38,4 +38,3 @@ setClass("dev_var",
     xrefs              = "list"
   )
 )
-

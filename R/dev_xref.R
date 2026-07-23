@@ -47,14 +47,16 @@
 #'       if (v@argument) cat(" is an argument of the function.")
 #'       cat("\n    References: ")
 #'       for (ref in v@xrefs) {
-#'         cat(ref@line, ":", ref@position, if (ref@modified) "*", " | ", sep = "")
+#'         cat(ref@line, ":", ref@position, if (ref@modified) "*",
+#'                " | ", sep = "")
 #'       }
 #'       cat("\n")
 #'     }
 #'   }
 #' }
 #' cat("*** Note that f1 does not appear as a function defined here!
-#' *** Note that variable b occurs in function f2 and f4, but with seperate references!
+#' *** Note that variable b occurs in function f2 and f4,
+#'     but with seperate references!
 #' *** Note the anonym function on line 17!")
 #' unlink(filename)
 #'
@@ -91,7 +93,8 @@ get_xref <- function(file = "") {
             funcname <- subs1$text
             env <- new.env(parent = emptyenv())
             dev_get_vars(subs2, parseddata, env, TRUE)
-            retval[[f]][[funcname]] <- as.list(env, all.names = TRUE, sorted = TRUE)
+            retval[[f]][[funcname]] <- as.list(env, all.names = TRUE,
+                                                       sorted = TRUE)
             function_ids <- c(function_ids, subs2$id[1L])
           }
         }
@@ -113,7 +116,8 @@ dev_get_vars <- function(subs, parseddata, env, first, ismodified) {
   if (first) {
     symbolformals <- which(subs$token == "SYMBOL_FORMALS")
     for (k in symbolformals) {
-      loc <- new("dev_ref", line = subs$line1[k], position = subs$col1[k], modified = FALSE)
+      loc <- new("dev_ref", line = subs$line1[k], position = subs$col1[k],
+                                                             modified = FALSE)
       var <- new("dev_var", name = subs$text[k], argument = TRUE,
         xrefs = list(loc))
       assign(var@name, var, env)
@@ -122,11 +126,12 @@ dev_get_vars <- function(subs, parseddata, env, first, ismodified) {
   for (jj in seq_along(subs$token)) {
     skipthis <- FALSE
     breakafter <- FALSE
-    LA <- which(subs$token == "LEFT_ASSIGN")
-    if (length(LA) == 0L) LA <- 0L
+    l_a <- which(subs$token == "LEFT_ASSIGN")
+    if (length(l_a) == 0L) l_a <- 0L
     if (subs$token[jj] == "SYMBOL") {
       vname <- subs$text[jj]
-      loc <- new("dev_ref", line = subs$line1[jj], position = subs$col1[jj], modified = ismodified)
+      loc <- new("dev_ref", line = subs$line1[jj], position = subs$col1[jj],
+                                                        modified = ismodified)
     } else if (subs$terminal[jj] == FALSE && any(subs$text %in% c("$", "@"))) {
       found <- FALSE
       curj <- subs$id[jj]
@@ -137,7 +142,8 @@ dev_get_vars <- function(subs, parseddata, env, first, ismodified) {
       }
       if (sss$token == "SYMBOL") {
         vname <- sss$text[1L]
-        loc <- new("dev_ref", line = sss$line1[1L], position = sss$col1[1L], modified = ismodified)
+        loc <- new("dev_ref", line = sss$line1[1L], position = sss$col1[1L],
+                                                        modified = ismodified)
         breakafter <- TRUE
       } else {
         skipthis <- TRUE
@@ -146,7 +152,8 @@ dev_get_vars <- function(subs, parseddata, env, first, ismodified) {
       if (subs$token[jj] %in% c("expr", "forcond")) {
         subsubs <- parseddata[parseddata$parent == subs$id[jj], ]
         # print(subsubs)
-        if (subsubs$text[1L] != "function") dev_get_vars(subsubs, parseddata, env, FALSE, jj < LA[1L])
+        if (subsubs$text[1L] != "function") dev_get_vars(subsubs, parseddata,
+                                                     env, FALSE, jj < l_a[1L])
       }
       skipthis <- TRUE
       }
@@ -205,7 +212,7 @@ xref_html1 <- function(gotxref, sourcemember, dest) {
   if (!dir.exists(dest)) {
     dir.create(dest)
   }
-  htmlnaam <- paste0(dest, "/", basename(sourcemember) , ".html")
+  htmlnaam <- paste0(dest, "/", basename(sourcemember), ".html")
   sink(htmlnaam)
   title <- paste("Xref", sourcemember)
   cat(
@@ -244,11 +251,11 @@ for (j in seq_along(functienamen)) {
   func <- gotxref[[j]]
   for (i in seq_along(func)) {
     vartje <- func[[i]]
-    cat('["', j, '", "', vartje@name, '", "', if(vartje@argument) "x", '", "',
-    paste(sapply(vartje@xrefs, \(xr)
-          paste0(xr@line, ":", xr@position, if(xr@modified) "*" else "")),
-          collapse = " ")
-     ,'"],\n', sep = "")
+    cat('["', j, '", "', vartje@name, '", "', if (vartje@argument) "x", '", "',
+    paste(sapply(vartje@xrefs, \(xr) {
+          paste0(xr@line, ":", xr@position, if (xr@modified) "*" else "")
+          }),
+          collapse = " "), '"],\n', sep = "")
   }
 }
 cat("];
@@ -258,11 +265,12 @@ function ShowFunc(funcname){
     if (funcids[j][0] == funcname) funcnaam = funcids[j][1]
   }
   text = \"<H1>Function \" + funcnaam + \"</H1><table>\";
-  text += \"<tr><th>Variable</th><th>Argument?</th><th>Positions where used, * means item is modified</th></tr>\";
+  text += \"<tr><th>Variable</th><th>Argument?</th>\";
+  text += \"<th>Positions where used, * means item is modified</th></tr>\";
   for (let i = 0; i < fvLen; i++) {
     if (funcvar[i][0] == funcname)
-      text += \"<tr><td>\" + funcvar[i][1] +
-        \"</td><td>\" + funcvar[i][2] + \"</td><td>\" + funcvar[i][3] + \"</td></tr>\\n\";
+      text += \"<tr><td>\" + funcvar[i][1] + \"</td><td>\" + funcvar[i][2] +
+         \"</td><td>\" + funcvar[i][3] + \"</td></tr>\\n\";
   }
   text += \"</table>\";
   document.getElementById(\"cont\").innerHTML = text;
@@ -293,11 +301,11 @@ window.onload = function() {
       sep = ""
     )
   }
-  cat(
+  cat(           # nolint start
     "</select>\n<div id=\"cont\" name=\"cont\" style=\"border-color:#ffd200;\" class=\"mycontainer\"></div>
      </body>
      </html>\n"
-  )
+  )              # nolint end  
   sink()
   browseURL(htmlnaam)
 }

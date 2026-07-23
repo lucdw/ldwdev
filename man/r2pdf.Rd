@@ -9,9 +9,10 @@ r2pdf(source_file, dest_file, show_pdf = FALSE)
 \arguments{
 \item{source_file}{The path to the R file.}
 
-\item{dest_file}{The path to the file to create. If this file already exists it will be overwritten.}
+\item{dest_file}{The path to the file to create.
+If this file already exists it will be overwritten.}
 
-\item{show_pdf}{Logical. If set to TRUE the PDF will be shown after completion.}
+\item{show_pdf}{Logical. If TRUE the PDF will be shown after completion.}
 }
 \value{
 NULL (invisible).

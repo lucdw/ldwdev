@@ -3,8 +3,9 @@
 #' Creates a pdf file of an R source file e.g. to print on paper.
 #'
 #' @param source_file The path to the R file.
-#' @param dest_file The path to the file to create. If this file already exists it will be overwritten.
-#' @param show_pdf Logical. If set to TRUE the PDF will be shown after completion.
+#' @param dest_file The path to the file to create.
+#'                  If this file already exists it will be overwritten.
+#' @param show_pdf Logical. If TRUE the PDF will be shown after completion.
 #'
 #' @return NULL (invisible).
 #'
@@ -23,7 +24,7 @@ r2pdf <- function(source_file, dest_file, show_pdf = FALSE) {
   tmpfile <- tempfile(fileext = ".tex")
   tmp <- file(tmpfile, open = "wt")
   tmppdf <- gsub(".tex", ".pdf", basename(tmpfile))
-  writeLines(c(
+  writeLines(c(                                                      # nolint start
   "\\documentclass[a4paper, twoside, openright, usecolor]{article}",
   "\\title{PDF from R-file.}",
   "\\author{r2pdf}",
@@ -143,11 +144,11 @@ r2pdf <- function(source_file, dest_file, show_pdf = FALSE) {
   "\\begin{document}",
   paste0("\\lstinputlisting{", src, "}"),
   "\\end{document}",
-  ""), tmp)
+  ""), tmp)                                                             # nolint end
   close(tmp)
   tools::texi2dvi(tmpfile, pdf = TRUE, clean = TRUE)
   file.copy(tmppdf, dst, TRUE)
   file.remove(tmppdf)
-  if (show_pdf) openPDF(dst)
+  if (show_pdf) open_pdf(dst)
   invisible(NULL)
 }

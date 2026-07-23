@@ -11,8 +11,8 @@ get_calls(files = "")
 }
 \value{
 named list with for each file a named list with for each called
-function in the file a named list of named arguments with a tuple line, position
-where this named argument is found
+function in the file a named list of named arguments with a tuple line,
+position where this named argument is found
 }
 \description{
 This function creates a list of the function call for
